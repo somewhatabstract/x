@@ -1,0 +1,98 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+# This workflow will run changesets depending on two different scenarios:
+#
+# 1. If we are landing a specific commit into main (Author PR), then
+#    changesets will check if there are changes verifying the Markdown files
+#    generated automatically:
+#
+#    a) There are new versions and there's NO Release PR, then the changesets
+#    action will create a new Release PR.
+#
+#    b) There's a Release PR, then the changesets action will update the
+#    existing Release PR with the new commit.
+#
+#    NOTE: (in both cases, changesets will modify the new version in
+#    package.json for each package, and will remove the MD files as part of the
+#    Release PR).
+#
+# 2. If we are landing the Release PR into main, then the changesets action
+#    will publish the changes to npm.
+#
+# For more info about this workflow, see:
+# https://github.com/changesets/action#usage
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # For provenance and trusted publishing
+      contents: write # For creating release PRs
+      pull-requests: write # For creating release PRs
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          run_install: false
+          package_json_file: package.json
+
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20.x
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install Dependencies
+        shell: bash
+        run: pnpm install --frozen-lockfile
+
+      - name: ⬆️ Upgrade npm for OIDC support
+        shell: bash
+        run: |
+          # npm trusted publishing requires npm CLI v11.5.1+
+          # Node.js 20 shipped with npm 9.x, so we likely need to upgrade
+
+          # First, let's check the current npm version, and if it's already
+          # sufficient, we can skip the upgrade step.
+          CURRENT_NPM_VERSION=$(npm --version)
+          REQUIRED_NPM_VERSION="11.5.1"
+
+          # This sorts the version numbers using `sort -V` and then takes
+          # the lowest version.
+          LOWEST_NPM_VERSION=$(printf '%s\n' "$REQUIRED_NPM_VERSION" "$CURRENT_NPM_VERSION" | sort -V | head -n1)
+
+          # If the lowest version is the same as the required version, then we
+          # don't need to upgrade as that means our current version is newer.
+          if [ "$LOWEST_NPM_VERSION" = "$REQUIRED_NPM_VERSION" ]; then
+            echo "✅ npm is already at version $CURRENT_NPM_VERSION"
+          else
+            npm install -g npm@latest && echo "✅ npm upgraded to $(npm --version)"
+          fi
+
+      - name: Create Release Pull Request or Publish to npm
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: pnpm publish:ci
+        env:
+          # We use a Personal Access Token here rather than the GITHUB_TOKEN
+          # so that it will trigger our other actions. The token has to be on
+          # the account of someone with appropriate access levels and given the
+          # repo scope.
+          GITHUB_TOKEN: ${{ secrets.BOT_PA_TOKEN }}
+          # This is the token used to publish to npm when OIDC trusted
+          # publishing isn't yet setup
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # This is used for the bundle analysis
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

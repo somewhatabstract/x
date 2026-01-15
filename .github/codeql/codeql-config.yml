@@ -1,0 +1,5 @@
+name: X CodeQL config
+paths:
+  - "src"
+paths-ignore:
+  - src/__tests__

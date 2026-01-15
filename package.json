@@ -8,6 +8,7 @@
   "bin": {
     "x": "./dist/x.mjs"
   },
+  "type": "module",
   "version": "0.0.1",
   "description": "Execute any bin defined by any package in a monorepo without needing to install that package",
   "scripts": {
@@ -37,9 +38,13 @@
     "@changesets/cli": "^2.29.8",
     "@codecov/rollup-plugin": "^1.9.1",
     "@types/node": "^20.19.29",
+    "@types/yargs": "^17.0.35",
     "@vitest/coverage-v8": "^4.0.17",
     "tsdown": "0.20.0-beta.3",
     "typescript": "^5.9.3",
     "vitest": "^4.0.17"
+  },
+  "dependencies": {
+    "yargs": "^18.0.0"
   }
 }

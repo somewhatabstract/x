@@ -1,0 +1,12 @@
+{
+  "name": "@somewhatabstract/x",
+  "version": "0.0.1",
+  "description": "Execute any bin defined by any package in a monorepo without needing to install that package",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "somewhatabstract",
+  "license": "MIT",
+  "packageManager": "pnpm@10.26.0"
+}

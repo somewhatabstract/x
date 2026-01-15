@@ -49,8 +49,12 @@ const options = {
     dryRun: argv["dry-run"] as boolean,
 };
 
-// Run the implementation
-xImpl(scriptName, args, options).catch((error) => {
-    console.error("Unexpected error:", error);
-    process.exit(1);
-});
+// Run the implementation and exit with the appropriate code
+xImpl(scriptName, args, options)
+    .then((result) => {
+        process.exit(result.exitCode);
+    })
+    .catch((error) => {
+        console.error("Unexpected error:", error);
+        process.exit(1);
+    });

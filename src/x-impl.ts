@@ -8,6 +8,10 @@ export interface XOptions {
     dryRun?: boolean;
 }
 
+export interface XResult {
+    exitCode: number;
+}
+
 /**
  * Main implementation of the x command.
  * Finds and executes a bin script from any package in the workspace.
@@ -15,12 +19,13 @@ export interface XOptions {
  * @param scriptName - Name of the bin script to execute
  * @param args - Arguments to pass to the script
  * @param options - Additional options
+ * @returns Result object with exit code
  */
 export async function xImpl(
     scriptName: string,
     args: string[] = [],
     options: XOptions = {},
-): Promise<void> {
+): Promise<XResult> {
     try {
         // Find workspace root
         const workspaceRoot = await findWorkspaceRoot();
@@ -65,20 +70,17 @@ export async function xImpl(
             );
             console.log(`  Binary: ${bin.binPath}`);
             console.log(`  Arguments: ${args.join(" ")}`);
-            return;
+            return {exitCode: 0};
         }
 
         // Execute the script
         const exitCode = await executeScript(bin, args);
 
-        // Exit with the same code as the script
-        if (exitCode !== 0) {
-            process.exit(exitCode);
-        }
+        return {exitCode};
     } catch (error) {
         if (error instanceof HandledError) {
             console.error(`Error: ${error.message}`);
-            process.exit(1);
+            return {exitCode: 1};
         }
         throw error;
     }

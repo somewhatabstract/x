@@ -12,8 +12,6 @@
   "description": "Execute any bin defined by any package in a monorepo without needing to install that package",
   "scripts": {
     "build": "tsdown",
-    "build:types": "tsc --emitDeclarationOnly --declaration --project tsconfig-types.json",
-    "clean": "tsdown --clean",
     "dev": "tsdown --watch",
     "lint": "echo \"No linting configured\"",
     "typecheck": "tsc --noEmit --project tsconfig.json",

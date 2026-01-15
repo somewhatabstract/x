@@ -1,4 +1,3 @@
 #!/usr/bin/env node
-
-const x: string = "Hello, world!";
-console.log(x);
+import {xImpl} from "../x-impl";
+xImpl();

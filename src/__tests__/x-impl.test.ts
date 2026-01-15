@@ -1,15 +1,9 @@
-import {describe, expect, it, vi} from "vitest";
-import { xImpl } from "../x-impl";
+import {describe, expect, it} from "vitest";
+import {xImpl} from "../x-impl";
 
 describe("xImpl", () => {
-    it("should log 'Hello, world!'", () => {
-        // Arrange
-        const consoleSpy = vi.spyOn(console, "log");
-
-        // Act
-        xImpl();
-
-        // Assert
-        expect(consoleSpy).toHaveBeenCalledWith("Hello, world!");
+    it("should return exit code 1 when script not found", async () => {
+        const result = await xImpl("nonexistent-script");
+        expect(result.exitCode).toBe(1);
     });
 });

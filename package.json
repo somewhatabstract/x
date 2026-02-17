@@ -45,7 +45,8 @@
     "vitest": "^4.0.17"
   },
   "dependencies": {
-    "ancesdir": "^7.2.0",
+    "@manypkg/find-root": "^3.1.0",
+    "@manypkg/get-packages": "^3.1.0",
     "yargs": "^18.0.0"
   }
 }

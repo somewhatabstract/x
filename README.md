@@ -4,7 +4,15 @@ Execute any bin defined by any package in a monorepo without needing to install 
 
 ## Overview
 
-`x` is a tool for pnpm workspaces that allows you to execute binary scripts from any package in your monorepo without installing them globally or in your current package. It automatically discovers all packages in your workspace and finds the matching bin script.
+`x` is a tool for monorepos that allows you to execute binary scripts from any package in your workspace without installing them globally or in your current package. It automatically discovers all packages in your workspace and finds the matching bin script.
+
+**Supports multiple package managers:**
+- 📦 npm workspaces
+- 🧶 Yarn (classic and modern)
+- 📌 pnpm workspaces
+- 🎯 Lerna
+- 🍞 Bun workspaces
+- 🚀 Rush
 
 ## Installation
 
@@ -12,60 +20,63 @@ Execute any bin defined by any package in a monorepo without needing to install 
 npm install -g @somewhatabstract/x
 # or
 pnpm add -g @somewhatabstract/x
+# or
+yarn global add @somewhatabstract/x
 ```
 
 ## Usage
 
 ```bash
 # Execute a bin script from any package in the workspace
-pnpm x <script-name> [...args]
+x <script-name> [...args]
 
 # Preview what would be executed (dry-run mode)
-pnpm x --dry-run <script-name>
+x --dry-run <script-name>
 
 # Pass arguments to the script
-pnpm x tsc --noEmit
-pnpm x eslint src/ --fix
-pnpm x jest --watch
+x tsc --noEmit
+x eslint src/ --fix
+x jest --watch
 ```
 
 ### Examples
 
 ```bash
 # Run TypeScript compiler from any package that provides it
-pnpm x tsc --noEmit
+x tsc --noEmit
 
 # Run ESLint from any package in the workspace
-pnpm x eslint src/
+x eslint src/
 
 # Preview which jest binary would be executed
-pnpm x --dry-run jest
+x --dry-run jest
 
 # Run a custom script with arguments
-pnpm x my-custom-script arg1 arg2
+x my-custom-script arg1 arg2
 ```
 
 ## Features
 
-- 🔍 **Automatic Discovery**: Finds all packages in your pnpm workspace
+- 🔍 **Automatic Discovery**: Finds all packages in your monorepo workspace
 - 🎯 **Smart Matching**: Locates the bin script you want to run
 - 🚀 **No Installation Needed**: Execute bins without installing packages
 - 👁️ **Dry-Run Mode**: Preview what would be executed with `--dry-run`
 - 🔧 **Multi-Language Support**: Works with Node.js, Bash, Python, and other interpreters via shebang detection
-- ⚡ **Fast**: Efficient package discovery using `pnpm list`
+- 📦 **Multi-Package-Manager**: Works with npm, Yarn, pnpm, Lerna, Bun, and Rush
+- ⚡ **Fast**: Efficient package discovery using @manypkg
 - 🛡️ **Type-Safe**: Written in TypeScript with full type safety
 
 ## How It Works
 
-1. **Workspace Detection**: Uses `ancesdir` to find the workspace root by looking for `pnpm-workspace.yaml`
-2. **Package Discovery**: Runs `pnpm list --json --recursive` to discover all packages in the workspace
+1. **Workspace Detection**: Uses `@manypkg/find-root` to find the workspace root (supports npm, Yarn, pnpm, Lerna, Bun, Rush)
+2. **Package Discovery**: Uses `@manypkg/get-packages` to discover all packages in the workspace
 3. **Bin Matching**: Searches through package.json files to find bins matching your requested script name
 4. **Execution**: Spawns the matched script with proper environment and interpreter (via shebang detection)
 
 ## Requirements
 
 - Node.js >= 20
-- pnpm workspace (must have a `pnpm-workspace.yaml` file)
+- A monorepo workspace (npm, Yarn, pnpm, Lerna, Bun, or Rush)
 
 ## CLI Options
 
@@ -79,7 +90,7 @@ pnpm x my-custom-script arg1 arg2
 
 The tool provides clear, user-friendly error messages:
 
-- **Not in a workspace**: "Could not find workspace root. Make sure you're in a pnpm workspace (pnpm-workspace.yaml not found)."
+- **Not in a workspace**: "Could not find workspace root. Make sure you're in a monorepo workspace."
 - **Script not found**: "No bin script named '<name>' found in any workspace package."
 - **Ambiguous match**: Lists all packages that provide the bin and asks you to be more specific
 
@@ -107,8 +118,8 @@ pnpm build
 The implementation follows a modular design with separate concerns:
 
 - `errors.ts` - Custom error types for user-friendly messages
-- `find-workspace-root.ts` - Workspace root detection using ancesdir
-- `discover-packages.ts` - Package discovery via pnpm list
+- `find-workspace-root.ts` - Workspace root detection using @manypkg/find-root
+- `discover-packages.ts` - Package discovery via @manypkg/get-packages
 - `find-matching-bins.ts` - Bin script matching logic
 - `execute-script.ts` - Script execution with shebang detection
 - `x-impl.ts` - Main orchestration logic

@@ -35,7 +35,7 @@ export async function xImpl(
 
         if (packages.length === 0) {
             throw new HandledError(
-                "No packages found in workspace. Is this a valid pnpm workspace?",
+                "No packages found in workspace. Is this a valid monorepo?",
             );
         }
 

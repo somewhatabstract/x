@@ -24,22 +24,44 @@ describe("findWorkspaceRoot", () => {
     });
 
     it("should find workspace root from nested directory", async () => {
-        const result = await findWorkspaceRoot(nestedDir);
+        // Arrange
+        const searchDir = nestedDir;
+
+        // Act
+        const result = await findWorkspaceRoot(searchDir);
+
+        // Assert
         expect(result).toBe(workspaceDir);
     });
 
     it("should find workspace root from workspace directory itself", async () => {
-        const result = await findWorkspaceRoot(workspaceDir);
+        // Arrange
+        const searchDir = workspaceDir;
+
+        // Act
+        const result = await findWorkspaceRoot(searchDir);
+
+        // Assert
         expect(result).toBe(workspaceDir);
     });
 
     it("should throw HandledError when not in a workspace", async () => {
+        // Arrange
         const nonWorkspaceDir = path.join(testDir, "non-workspace");
         await fs.mkdir(nonWorkspaceDir, {recursive: true});
 
+        // Act & Assert
         await expect(findWorkspaceRoot(nonWorkspaceDir)).rejects.toThrow(
             HandledError,
         );
+    });
+
+    it("should provide meaningful error message when not in a workspace", async () => {
+        // Arrange
+        const nonWorkspaceDir = path.join(testDir, "non-workspace");
+        await fs.mkdir(nonWorkspaceDir, {recursive: true});
+
+        // Act & Assert
         await expect(findWorkspaceRoot(nonWorkspaceDir)).rejects.toThrow(
             "Could not find workspace root",
         );

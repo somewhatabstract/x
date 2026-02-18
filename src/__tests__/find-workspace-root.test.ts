@@ -50,10 +50,11 @@ describe("findWorkspaceRoot", () => {
         const nonWorkspaceDir = path.join(testDir, "non-workspace");
         await fs.mkdir(nonWorkspaceDir, {recursive: true});
 
-        // Act & Assert
-        await expect(findWorkspaceRoot(nonWorkspaceDir)).rejects.toThrow(
-            HandledError,
-        );
+        // Act
+        const underTest = () => findWorkspaceRoot(nonWorkspaceDir);
+
+        // Assert
+        await expect(underTest).rejects.toThrow(HandledError);
     });
 
     it("should provide meaningful error message when not in a workspace", async () => {
@@ -61,8 +62,11 @@ describe("findWorkspaceRoot", () => {
         const nonWorkspaceDir = path.join(testDir, "non-workspace");
         await fs.mkdir(nonWorkspaceDir, {recursive: true});
 
-        // Act & Assert
-        await expect(findWorkspaceRoot(nonWorkspaceDir)).rejects.toThrow(
+        // Act
+        const underTest = () => findWorkspaceRoot(nonWorkspaceDir);
+
+        // Assert
+        await expect(underTest).rejects.toThrow(
             "Could not find workspace root",
         );
     });

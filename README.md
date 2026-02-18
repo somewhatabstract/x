@@ -61,7 +61,7 @@ x my-custom-script arg1 arg2
 - 🎯 **Smart Matching**: Locates the bin script you want to run
 - 🚀 **No Installation Needed**: Execute bins without installing packages
 - 👁️ **Dry-Run Mode**: Preview what would be executed with `--dry-run`
-- 🔧 **Multi-Language Support**: Works with Node.js, Bash, Python, and other interpreters via shebang detection
+- 🔧 **Multi-Language Support**: Works with any executable script (Node.js, Bash, Python, etc.)
 - 📦 **Multi-Package-Manager**: Works with npm, Yarn, pnpm, Lerna, Bun, and Rush
 - ⚡ **Fast**: Efficient package discovery using @manypkg
 - 🛡️ **Type-Safe**: Written in TypeScript with full type safety
@@ -71,7 +71,7 @@ x my-custom-script arg1 arg2
 1. **Workspace Detection**: Uses `@manypkg/find-root` to find the workspace root (supports npm, Yarn, pnpm, Lerna, Bun, Rush)
 2. **Package Discovery**: Uses `@manypkg/get-packages` to discover all packages in the workspace
 3. **Bin Matching**: Searches through package.json files to find bins matching your requested script name
-4. **Execution**: Spawns the matched script with proper environment and interpreter (via shebang detection)
+4. **Execution**: Executes the matched script directly (assumes executable with proper shebang)
 
 ## Requirements
 
@@ -121,7 +121,7 @@ The implementation follows a modular design with separate concerns:
 - `find-workspace-root.ts` - Workspace root detection using @manypkg/find-root
 - `discover-packages.ts` - Package discovery via @manypkg/get-packages
 - `find-matching-bins.ts` - Bin script matching logic
-- `execute-script.ts` - Script execution with shebang detection
+- `execute-script.ts` - Direct script execution
 - `x-impl.ts` - Main orchestration logic
 - `bin/x.ts` - CLI entry point with yargs
 

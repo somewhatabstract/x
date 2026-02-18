@@ -44,7 +44,7 @@ const argv = yargs(hideBin(process.argv))
 
 // Extract script name and args
 const scriptName = argv["script-name"] as string;
-const args = (argv.args as string[]) || [];
+const args = (argv._ as string[]) || [];
 const options = {
     dryRun: argv["dry-run"] as boolean,
 };

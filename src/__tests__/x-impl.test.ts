@@ -267,4 +267,48 @@ describe("xImpl", () => {
         // Assert
         await expect(underTest).rejects.toThrow("Unexpected error");
     });
+
+    it("should return exit code 1 when script name is empty", async () => {
+        // Arrange
+        const scriptName = "";
+
+        // Act
+        const result = await xImpl(scriptName);
+
+        // Assert
+        expect(result.exitCode).toBe(1);
+    });
+
+    it("should return exit code 1 when script name is only whitespace", async () => {
+        // Arrange
+        const scriptName = "   ";
+
+        // Act
+        const result = await xImpl(scriptName);
+
+        // Assert
+        expect(result.exitCode).toBe(1);
+    });
+
+    it("should return exit code 1 when script name contains forward slash", async () => {
+        // Arrange
+        const scriptName = "bin/script";
+
+        // Act
+        const result = await xImpl(scriptName);
+
+        // Assert
+        expect(result.exitCode).toBe(1);
+    });
+
+    it("should return exit code 1 when script name contains backslash", async () => {
+        // Arrange
+        const scriptName = "bin\\script";
+
+        // Act
+        const result = await xImpl(scriptName);
+
+        // Assert
+        expect(result.exitCode).toBe(1);
+    });
 });

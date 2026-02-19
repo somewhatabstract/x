@@ -250,4 +250,130 @@ describe("executeScript", () => {
         // Assert
         expect(exitCode).toBe(1);
     });
+
+    it("should return 1 on spawn error (ENOENT)", async () => {
+        // Arrange
+        const bin: BinInfo = {
+            packageName: "test-package",
+            packagePath: "/test/package",
+            binName: "test-bin",
+            binPath: "/test/package/bin/nonexistent",
+        };
+        const args: string[] = [];
+        const workspaceRoot = "/test/workspace";
+
+        vi.mocked(buildEnv.buildEnvironment).mockResolvedValue({});
+
+        const mockChild = {
+            on: vi.fn((event, callback) => {
+                if (event === "error") {
+                    setTimeout(() => {
+                        const error: any = new Error("ENOENT");
+                        error.code = "ENOENT";
+                        callback(error);
+                    }, 0);
+                }
+            }),
+        };
+        vi.mocked(childProcess.spawn).mockReturnValue(mockChild as any);
+
+        // Act
+        const exitCode = await executeScript(bin, args, workspaceRoot);
+
+        // Assert
+        expect(exitCode).toBe(1);
+    });
+
+    it("should return 1 on spawn error (EACCES)", async () => {
+        // Arrange
+        const bin: BinInfo = {
+            packageName: "test-package",
+            packagePath: "/test/package",
+            binName: "test-bin",
+            binPath: "/test/package/bin/nopermission",
+        };
+        const args: string[] = [];
+        const workspaceRoot = "/test/workspace";
+
+        vi.mocked(buildEnv.buildEnvironment).mockResolvedValue({});
+
+        const mockChild = {
+            on: vi.fn((event, callback) => {
+                if (event === "error") {
+                    setTimeout(() => {
+                        const error: any = new Error("EACCES");
+                        error.code = "EACCES";
+                        callback(error);
+                    }, 0);
+                }
+            }),
+        };
+        vi.mocked(childProcess.spawn).mockReturnValue(mockChild as any);
+
+        // Act
+        const exitCode = await executeScript(bin, args, workspaceRoot);
+
+        // Assert
+        expect(exitCode).toBe(1);
+    });
+
+    it("should return 1 when process is killed by signal", async () => {
+        // Arrange
+        const bin: BinInfo = {
+            packageName: "test-package",
+            packagePath: "/test/package",
+            binName: "test-bin",
+            binPath: "/test/package/bin/test",
+        };
+        const args: string[] = [];
+        const workspaceRoot = "/test/workspace";
+
+        vi.mocked(buildEnv.buildEnvironment).mockResolvedValue({});
+
+        const mockChild = {
+            on: vi.fn((event, callback) => {
+                if (event === "exit") {
+                    // Simulate SIGTERM - exit with null code and signal
+                    setTimeout(() => callback(null, "SIGTERM"), 0);
+                }
+            }),
+        };
+        vi.mocked(childProcess.spawn).mockReturnValue(mockChild as any);
+
+        // Act
+        const exitCode = await executeScript(bin, args, workspaceRoot);
+
+        // Assert
+        expect(exitCode).toBe(1);
+    });
+
+    it("should return 1 when process is killed by SIGINT", async () => {
+        // Arrange
+        const bin: BinInfo = {
+            packageName: "test-package",
+            packagePath: "/test/package",
+            binName: "test-bin",
+            binPath: "/test/package/bin/test",
+        };
+        const args: string[] = [];
+        const workspaceRoot = "/test/workspace";
+
+        vi.mocked(buildEnv.buildEnvironment).mockResolvedValue({});
+
+        const mockChild = {
+            on: vi.fn((event, callback) => {
+                if (event === "exit") {
+                    // Simulate SIGINT (Ctrl+C) - exit with null code and signal
+                    setTimeout(() => callback(null, "SIGINT"), 0);
+                }
+            }),
+        };
+        vi.mocked(childProcess.spawn).mockReturnValue(mockChild as any);
+
+        // Act
+        const exitCode = await executeScript(bin, args, workspaceRoot);
+
+        // Assert
+        expect(exitCode).toBe(1);
+    });
 });

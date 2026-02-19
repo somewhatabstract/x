@@ -262,4 +262,156 @@ describe("findMatchingBins", () => {
         // Assert
         expect(matches).toHaveLength(0);
     });
+
+    it("should reject path traversal attempt with parent directory in string-style bin", async () => {
+        // Arrange
+        const packages: PackageInfo[] = [
+            {
+                name: "malicious-package",
+                path: "/test/package",
+                version: "1.0.0",
+            },
+        ];
+
+        vi.mocked(fs.readFile).mockResolvedValue(
+            JSON.stringify({
+                name: "malicious-package",
+                bin: "../../../etc/passwd",
+            }),
+        );
+
+        // Act
+        const matches = await findMatchingBins(packages, "malicious-package");
+
+        // Assert
+        expect(matches).toHaveLength(0);
+    });
+
+    it("should reject path traversal attempt with parent directory in object-style bin", async () => {
+        // Arrange
+        const packages: PackageInfo[] = [
+            {
+                name: "malicious-package",
+                path: "/test/package",
+                version: "1.0.0",
+            },
+        ];
+
+        vi.mocked(fs.readFile).mockResolvedValue(
+            JSON.stringify({
+                name: "malicious-package",
+                bin: {
+                    "evil-script": "../../../usr/bin/malicious",
+                },
+            }),
+        );
+
+        // Act
+        const matches = await findMatchingBins(packages, "evil-script");
+
+        // Assert
+        expect(matches).toHaveLength(0);
+    });
+
+    it("should reject absolute path in string-style bin", async () => {
+        // Arrange
+        const packages: PackageInfo[] = [
+            {
+                name: "malicious-package",
+                path: "/test/package",
+                version: "1.0.0",
+            },
+        ];
+
+        vi.mocked(fs.readFile).mockResolvedValue(
+            JSON.stringify({
+                name: "malicious-package",
+                bin: "/usr/bin/malicious",
+            }),
+        );
+
+        // Act
+        const matches = await findMatchingBins(packages, "malicious-package");
+
+        // Assert
+        expect(matches).toHaveLength(0);
+    });
+
+    it("should reject absolute path in object-style bin", async () => {
+        // Arrange
+        const packages: PackageInfo[] = [
+            {
+                name: "malicious-package",
+                path: "/test/package",
+                version: "1.0.0",
+            },
+        ];
+
+        vi.mocked(fs.readFile).mockResolvedValue(
+            JSON.stringify({
+                name: "malicious-package",
+                bin: {
+                    "evil-script": "/usr/bin/malicious",
+                },
+            }),
+        );
+
+        // Act
+        const matches = await findMatchingBins(packages, "evil-script");
+
+        // Assert
+        expect(matches).toHaveLength(0);
+    });
+
+    it("should accept bin path in subdirectory", async () => {
+        // Arrange
+        const packages: PackageInfo[] = [
+            {
+                name: "good-package",
+                path: "/test/package",
+                version: "1.0.0",
+            },
+        ];
+
+        vi.mocked(fs.readFile).mockResolvedValue(
+            JSON.stringify({
+                name: "good-package",
+                bin: {
+                    "good-script": "./bin/nested/script.js",
+                },
+            }),
+        );
+
+        // Act
+        const matches = await findMatchingBins(packages, "good-script");
+
+        // Assert
+        expect(matches).toHaveLength(1);
+    });
+
+    it("should accept bin path at package root", async () => {
+        // Arrange
+        const packages: PackageInfo[] = [
+            {
+                name: "good-package",
+                path: "/test/package",
+                version: "1.0.0",
+            },
+        ];
+
+        vi.mocked(fs.readFile).mockResolvedValue(
+            JSON.stringify({
+                name: "good-package",
+                bin: {
+                    "good-script": "./script.js",
+                },
+            }),
+        );
+
+        // Act
+        const matches = await findMatchingBins(packages, "good-script");
+
+        // Assert
+        expect(matches).toHaveLength(1);
+    });
 });

@@ -34,8 +34,11 @@ export async function executeScript(
         });
 
         child.on("exit", (code, signal) => {
-            // If killed by signal, use exit code 128 + signal number (common convention)
-            // For now, we'll use 1 for any signal-based termination
+            // If killed by signal, we could use exit code 128 + signal number,
+            // (a common convention), however, for simplicity, we'll just
+            // return 1 for any signal-based termination as it's not clear
+            // that we need to distinguish between different signals in this
+            // context.
             if (signal) {
                 resolve(1);
             } else {

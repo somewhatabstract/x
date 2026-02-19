@@ -5,11 +5,11 @@
         "indentStyle": "space",
         "indentWidth": 4,
         "bracketSpacing": false,
-        "includes": ["**", "!dist/**"]
+        "includes": ["**", "!dist/**", "!coverage/**"]
     },
     "linter": {
         "enabled": true,
-        "includes": ["**", "!dist/**"]
+        "includes": ["**", "!dist/**", "!coverage/**"]
     },
     "assist": {
         "enabled": true,
@@ -17,7 +17,7 @@
     },
     "overrides": [
         {
-            "includes": ["*.json"],
+            "includes": ["*.json", "*.jsonc"],
             "json": {
                 "parser": {
                     "allowComments": true,

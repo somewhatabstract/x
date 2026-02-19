@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from "vitest";
-import { xImpl } from "../x-impl";
+import {xImpl} from "../x-impl";
 
 describe("xImpl", () => {
     it("should log 'Hello, world!'", () => {

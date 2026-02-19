@@ -13,7 +13,7 @@
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
-    "lint": "echo \"No linting configured\"",
+    "lint": "eslint src",
     "typecheck": "tsc --noEmit --project tsconfig.json",
     "typewatch": "pnpm typecheck --watch",
     "test": "vitest",
@@ -36,10 +36,23 @@
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
     "@codecov/rollup-plugin": "^1.9.1",
+    "@eslint/compat": "^2.0.1",
+    "@eslint/js": "^9.24.0",
     "@types/node": "^20.19.29",
+    "@typescript-eslint/eslint-plugin": "^8.46.4",
+    "@typescript-eslint/parser": "^8.46.4",
     "@vitest/coverage-v8": "^4.0.17",
+    "eslint": "^9.24.0",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-import-resolver-typescript": "^4.3.1",
+    "eslint-plugin-eslint-comments": "^3.2.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-prettier": "^5.2.6",
+    "globals": "^17.3.0",
+    "prettier": "^3.5.3",
     "tsdown": "0.20.0-beta.3",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.4",
     "vitest": "^4.0.17"
   }
 }

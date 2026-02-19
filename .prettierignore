@@ -1,0 +1,9 @@
+node_modules
+coverage
+dist
+*.json
+*.yml
+*.md
+pnpm-lock.yaml
+.prettierignore
+.gitignore

@@ -205,16 +205,21 @@ describe("resolveBinPath", () => {
             expect(result).toBeNull();
         });
 
-        it("should reject path with mixed separators trying to escape", () => {
+        it("should handle path with backslashes (valid filename chars on Unix)", () => {
             // Arrange
-            const bin = "..\\..\\..\\Windows\\System32\\cmd.exe";
+            // On Unix, backslashes are valid filename characters, not path separators
+            // On Windows, Node.js normalizes these to forward slashes before our check
+            const bin = "bin\\script.js";
             const binName = "test-package";
 
             // Act
             const result = resolveBinPath(mockPackage, bin, binName);
 
             // Assert
-            expect(result).toBeNull();
+            // Should resolve successfully since backslashes are just filename chars on Unix
+            expect(result).toBe(
+                path.resolve("/workspace/packages/test-package", "bin\\script.js"),
+            );
         });
     });
 

@@ -122,6 +122,7 @@ The implementation follows a modular design with separate concerns:
 - `discover-packages.ts` - Package discovery via @manypkg/get-packages
 - `find-matching-bins.ts` - Bin script matching logic
 - `execute-script.ts` - Direct script execution
+- `build-environment.ts` - npm/pnpm environment variable construction
 - `resolve-bin-path.ts` - Bin path resolution with security validation (path traversal protection)
 - `x-impl.ts` - Main orchestration logic
 - `bin/x.ts` - CLI entry point with yargs

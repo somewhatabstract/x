@@ -11,7 +11,7 @@ Introduce linting and formatting enforced by CI, using Biome, and align rules wi
 - Use Biome for both linting and formatting.
 - Enforce lint + format checks in CI via `pnpm lint`.
 - Keep a single `lint` script for validation
-- Add `format` script for auto-formatting that uses `pnpm lint --write --unsafe` to apply fixes.
+- Add `lint:fix` script for auto-formatting that uses `pnpm lint --write --unsafe` to apply fixes.
 - Mirror existing rules from related repos as closely as practical.
 
 ## Plan
@@ -31,4 +31,4 @@ Introduce linting and formatting enforced by CI, using Biome, and align rules wi
 ## Verification
 
 - Run `pnpm lint` and confirm it fails on lint/format violations and passes on a clean state.
-- Run `pnpm format` to fix lint errors and confirm that it applies changes correctly.
+- Run `pnpm lint:fix` to fix lint errors and confirm that it applies changes correctly.

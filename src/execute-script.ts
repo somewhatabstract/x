@@ -28,6 +28,11 @@ export async function executeScript(
             env,
         });
 
+        child.on("error", (err) => {
+            // Handle spawn errors (ENOENT, EACCES, etc.)
+            resolve(1);
+        });
+
         child.on("exit", (code) => {
             resolve(code ?? 1);
         });

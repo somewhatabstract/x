@@ -41,21 +41,38 @@ export async function findMatchingBins(
             if (typeof bin === "string") {
                 // If bin is a string, the bin name is the package name
                 if (pkg.name === binName) {
+                    const packageDir = path.resolve(pkg.path);
+                    const resolvedBinPath = path.resolve(pkg.path, bin);
+                    // Ensure the bin path stays within the package directory
+                    if (!resolvedBinPath.startsWith(packageDir + path.sep)) {
+                        continue;
+                    }
+
                     matches.push({
                         packageName: pkg.name,
                         packagePath: pkg.path,
                         binName: pkg.name,
-                        binPath: path.join(pkg.path, bin),
+                        binPath: resolvedBinPath,
                     });
                 }
             } else if (typeof bin === "object") {
                 // If bin is an object, check if it has the requested bin name
                 if (bin[binName]) {
+                    const packageDir = path.resolve(pkg.path);
+                    const resolvedBinPath = path.resolve(
+                        pkg.path,
+                        bin[binName],
+                    );
+                    // Ensure the bin path stays within the package directory
+                    if (!resolvedBinPath.startsWith(packageDir + path.sep)) {
+                        continue;
+                    }
+
                     matches.push({
                         packageName: pkg.name,
                         packagePath: pkg.path,
                         binName: binName,
-                        binPath: path.join(pkg.path, bin[binName]),
+                        binPath: resolvedBinPath,
                     });
                 }
             }

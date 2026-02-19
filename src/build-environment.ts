@@ -24,7 +24,20 @@ export async function buildEnvironment(
     }
 
     // Get our own package version for user agent
-    const ourPackageVersion = "0.0.1"; // TODO: Read from our own package.json
+    let ourPackageVersion = "0.0.0-development";
+    try {
+        const ownPackageJsonPath = path.join(__dirname, "..", "package.json");
+        const ownPackageJsonContent = await fs.readFile(
+            ownPackageJsonPath,
+            "utf-8",
+        );
+        const ownPackageJson = JSON.parse(ownPackageJsonContent);
+        if (typeof ownPackageJson.version === "string") {
+            ourPackageVersion = ownPackageJson.version;
+        }
+    } catch {
+        // If we can't read our own package.json, continue with fallback version
+    }
 
     // Build the environment
     const env: NodeJS.ProcessEnv = {

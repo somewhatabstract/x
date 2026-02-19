@@ -12,7 +12,7 @@ import type { PackageInfo } from "./discover-packages";
  * object
  * @param binName - The name of the bin as specified in package.json
  * @returns The resolved absolute path to the bin script, or null if invalid
- * @throws {Error} If the bin path is invalid or cannot be resolved
+
  */
 export function resolveBinPath(pkg: PackageInfo, bin: any, binName: string): string | null {
     // bin can be a string or an object

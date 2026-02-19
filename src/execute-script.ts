@@ -33,8 +33,14 @@ export async function executeScript(
             resolve(1);
         });
 
-        child.on("exit", (code) => {
-            resolve(code ?? 1);
+        child.on("exit", (code, signal) => {
+            // If killed by signal, use exit code 128 + signal number (common convention)
+            // For now, we'll use 1 for any signal-based termination
+            if (signal) {
+                resolve(1);
+            } else {
+                resolve(code ?? 1);
+            }
         });
     });
 }

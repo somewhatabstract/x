@@ -16,7 +16,7 @@ import type { PackageInfo } from "./discover-packages";
  */
 export function resolveBinPath(pkg: PackageInfo, bin: any, binName: string): string | null {
     // bin can be a string or an object
-    const binPath: string = !bin
+    const binPath: string | null = !bin
         ? null
         : typeof bin === "string" && pkg.name === binName
             // If bin is a string, the bin name is the package name

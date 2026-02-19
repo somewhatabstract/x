@@ -12,6 +12,9 @@ import * as fs from "node:fs/promises";
 describe("findMatchingBins", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.spyOn(console, "warn").mockImplementation(() => {
+            /* shh */
+        });
     });
 
     it("should find one matching bin with object-style bin configuration", async () => {

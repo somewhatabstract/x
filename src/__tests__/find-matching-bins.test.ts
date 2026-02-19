@@ -211,4 +211,55 @@ describe("findMatchingBins", () => {
         // Assert
         expect(matches).toHaveLength(0);
     });
+
+    it("should not match string-style bin when package name differs from binName", async () => {
+        // Arrange
+        const packages: PackageInfo[] = [
+            {
+                name: "my-package",
+                path: "/test/path",
+                version: "1.0.0",
+            },
+        ];
+
+        vi.mocked(fs.readFile).mockResolvedValue(
+            JSON.stringify({
+                name: "my-package",
+                bin: "./bin/script.js",
+            }),
+        );
+
+        // Act
+        const matches = await findMatchingBins(packages, "different-name");
+
+        // Assert
+        expect(matches).toHaveLength(0);
+    });
+
+    it("should not match object-style bin when binName not in object", async () => {
+        // Arrange
+        const packages: PackageInfo[] = [
+            {
+                name: "my-package",
+                path: "/test/path",
+                version: "1.0.0",
+            },
+        ];
+
+        vi.mocked(fs.readFile).mockResolvedValue(
+            JSON.stringify({
+                name: "my-package",
+                bin: {
+                    "other-bin": "./bin/other.js",
+                    "another-bin": "./bin/another.js",
+                },
+            }),
+        );
+
+        // Act
+        const matches = await findMatchingBins(packages, "missing-bin");
+
+        // Assert
+        expect(matches).toHaveLength(0);
+    });
 });

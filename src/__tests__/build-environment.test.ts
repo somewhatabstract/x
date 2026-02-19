@@ -214,4 +214,25 @@ describe("buildEnvironment", () => {
             }),
         );
     });
+
+    it("should handle string fields without JSON conversion", async () => {
+        // Arrange
+        const workspaceRoot = "/test/workspace";
+        const currentEnv = {PATH: "/usr/bin"};
+
+        vi.mocked(fs.readFile).mockResolvedValue(
+            JSON.stringify({
+                name: "my-workspace",
+                license: "MIT",
+                author: "John Doe",
+            }),
+        );
+
+        // Act
+        const env = await buildEnvironment(workspaceRoot, currentEnv);
+
+        // Assert
+        expect(env.npm_package_license).toBe("MIT");
+        expect(env.npm_package_author).toBe("John Doe");
+    });
 });

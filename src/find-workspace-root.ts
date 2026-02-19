@@ -15,9 +15,10 @@ export async function findWorkspaceRoot(
     try {
         const result = await findRoot(startDir);
         return result.rootDir;
-    } catch (error: any) {
+    } catch (error: unknown) {
         throw new HandledError(
             "Could not find workspace root. Make sure you're in a monorepo workspace.",
+            {cause: error},
         );
     }
 }

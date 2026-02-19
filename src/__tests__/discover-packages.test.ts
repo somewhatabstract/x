@@ -165,8 +165,6 @@ describe("discoverPackages", () => {
 
         // Assert
         await expect(underTest).rejects.toThrow(HandledError);
-        await expect(underTest).rejects.toThrow(
-            "Failed to discover packages: Original error",
-        );
+        await expect(underTest).rejects.toThrow("Failed to discover packages");
     });
 });

@@ -28,7 +28,7 @@ export async function executeScript(
             env,
         });
 
-        child.on("error", (err) => {
+        child.on("error", (_) => {
             // Handle spawn errors (ENOENT, EACCES, etc.)
             resolve(1);
         });

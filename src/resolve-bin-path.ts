@@ -16,7 +16,7 @@ import type {PackageInfo} from "./discover-packages";
  */
 export function resolveBinPath(
     pkg: PackageInfo,
-    bin: any,
+    bin: string | undefined | null | Record<string, string>,
     binName: string,
 ): string | null {
     // bin can be a string or an object

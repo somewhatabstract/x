@@ -14,12 +14,12 @@ export async function buildEnvironment(
     currentEnv: NodeJS.ProcessEnv,
 ): Promise<NodeJS.ProcessEnv> {
     // Read workspace root's package.json for metadata
-    let workspacePackageJson: any = {};
+    let workspacePackageJson: Record<string, unknown> = {};
     try {
         const packageJsonPath = path.join(workspaceRoot, "package.json");
         const content = await fs.readFile(packageJsonPath, "utf-8");
         workspacePackageJson = JSON.parse(content);
-    } catch (error) {
+    } catch {
         // If we can't read package.json, continue with empty metadata
     }
 
@@ -65,13 +65,14 @@ export async function buildEnvironment(
 
     // Add npm_package_* variables from workspace root's package.json
     if (workspacePackageJson.name) {
-        env.npm_package_name = workspacePackageJson.name;
+        env.npm_package_name = workspacePackageJson.name as string;
     }
     if (workspacePackageJson.version) {
-        env.npm_package_version = workspacePackageJson.version;
+        env.npm_package_version = workspacePackageJson.version as string;
     }
     if (workspacePackageJson.description) {
-        env.npm_package_description = workspacePackageJson.description;
+        env.npm_package_description =
+            workspacePackageJson.description as string;
     }
 
     // Add other common package.json fields

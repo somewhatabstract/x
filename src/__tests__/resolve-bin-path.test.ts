@@ -229,7 +229,7 @@ describe("resolveBinPath", () => {
     describe("type handling", () => {
         it("should return null when bin is a number", () => {
             // Arrange
-            const bin = 123;
+            const bin: any = 123;
             const binName = "test-package";
 
             // Act
@@ -241,7 +241,7 @@ describe("resolveBinPath", () => {
 
         it("should return null when bin is a boolean", () => {
             // Arrange
-            const bin = true;
+            const bin: any = true;
             const binName = "test-package";
 
             // Act
@@ -265,7 +265,7 @@ describe("resolveBinPath", () => {
 
         it("should return null when bin is an array", () => {
             // Arrange
-            const bin = ["bin/cli.js"];
+            const bin: any = ["bin/cli.js"];
             const binName = "test-package";
 
             // Act

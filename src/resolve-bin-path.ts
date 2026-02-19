@@ -1,5 +1,5 @@
 import path from "node:path";
-import type { PackageInfo } from "./discover-packages";
+import type {PackageInfo} from "./discover-packages";
 
 /**
  * Resolve a bin script to the actual file path.
@@ -14,17 +14,21 @@ import type { PackageInfo } from "./discover-packages";
  * @returns The resolved absolute path to the bin script, or null if invalid
 
  */
-export function resolveBinPath(pkg: PackageInfo, bin: any, binName: string): string | null {
+export function resolveBinPath(
+    pkg: PackageInfo,
+    bin: any,
+    binName: string,
+): string | null {
     // bin can be a string or an object
     const binPath: string | null = !bin
         ? null
         : typeof bin === "string" && pkg.name === binName
-            // If bin is a string, the bin name is the package name
-            ? bin
-            // If bin is an object, check if it has the requested bin name
-            : typeof bin === "object" && bin[binName]
-                ? bin[binName]
-                : null;
+          ? // If bin is a string, the bin name is the package name
+            bin
+          : // If bin is an object, check if it has the requested bin name
+            typeof bin === "object" && bin[binName]
+            ? bin[binName]
+            : null;
 
     if (!binPath) {
         return null;
@@ -33,8 +37,10 @@ export function resolveBinPath(pkg: PackageInfo, bin: any, binName: string): str
     const packageDir = path.resolve(pkg.path);
     const resolvedBinPath = path.resolve(pkg.path, binPath);
     // Ensure the bin path stays within the package directory
-    if (resolvedBinPath !== packageDir &&
-        !resolvedBinPath.startsWith(packageDir + path.sep)) {
+    if (
+        resolvedBinPath !== packageDir &&
+        !resolvedBinPath.startsWith(packageDir + path.sep)
+    ) {
         return null;
     }
 

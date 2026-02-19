@@ -34,10 +34,7 @@ const argv = yargs(hideBin(process.argv))
     .version()
     .alias("version", "v")
     .example("$0 tsc --noEmit", "Run TypeScript compiler from any package")
-    .example(
-        "$0 eslint src/",
-        "Run ESLint from any package that provides it",
-    )
+    .example("$0 eslint src/", "Run ESLint from any package that provides it")
     .example("$0 --dry-run jest", "Preview which jest would be executed")
     .strict()
     .parseSync();

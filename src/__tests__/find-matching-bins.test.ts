@@ -1,6 +1,6 @@
-import {describe, expect, it, vi, beforeEach} from "vitest";
-import {findMatchingBins} from "../find-matching-bins";
+import {beforeEach, describe, expect, it, vi} from "vitest";
 import type {PackageInfo} from "../discover-packages";
+import {findMatchingBins} from "../find-matching-bins";
 
 // Mock the fs module
 vi.mock("node:fs/promises", () => ({

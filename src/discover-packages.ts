@@ -31,10 +31,7 @@ export async function discoverPackages(
             throw error;
         }
 
-        const errorMessage =
-            (error as any)?.message ?? String(error);
-        throw new HandledError(
-            `Failed to discover packages: ${errorMessage}`,
-        );
+        const errorMessage = (error as any)?.message ?? String(error);
+        throw new HandledError(`Failed to discover packages: ${errorMessage}`);
     }
 }

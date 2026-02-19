@@ -1,0 +1,29 @@
+{
+    "$schema": "https://biomejs.dev/schemas/2.4.3/schema.json",
+    "formatter": {
+        "enabled": true,
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "bracketSpacing": false,
+        "includes": ["**", "!dist/**"]
+    },
+    "linter": {
+        "enabled": true,
+        "includes": ["**", "!dist/**"]
+    },
+    "assist": {
+        "enabled": true,
+        "includes": ["**", "!dist/**"]
+    },
+    "overrides": [
+        {
+            "includes": ["*.json"],
+            "json": {
+                "parser": {
+                    "allowComments": true,
+                    "allowTrailingCommas": true
+                }
+            }
+        }
+    ]
+}

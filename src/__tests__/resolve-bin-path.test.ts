@@ -1,7 +1,7 @@
-import {describe, expect, it} from "vitest";
-import {resolveBinPath} from "../resolve-bin-path";
-import type {PackageInfo} from "../discover-packages";
 import path from "node:path";
+import {describe, expect, it} from "vitest";
+import type {PackageInfo} from "../discover-packages";
+import {resolveBinPath} from "../resolve-bin-path";
 
 describe("resolveBinPath", () => {
     const mockPackage: PackageInfo = {
@@ -218,7 +218,10 @@ describe("resolveBinPath", () => {
             // Assert
             // Should resolve successfully since backslashes are just filename chars on Unix
             expect(result).toBe(
-                path.resolve("/workspace/packages/test-package", "bin\\script.js"),
+                path.resolve(
+                    "/workspace/packages/test-package",
+                    "bin\\script.js",
+                ),
             );
         });
     });
@@ -293,10 +296,7 @@ describe("resolveBinPath", () => {
 
             // Assert
             expect(result).toBe(
-                path.resolve(
-                    "/workspace/packages/test-package/",
-                    "bin/cli.js",
-                ),
+                path.resolve("/workspace/packages/test-package/", "bin/cli.js"),
             );
         });
 
@@ -334,7 +334,10 @@ describe("resolveBinPath", () => {
 
             // Assert
             expect(result).toBe(
-                path.resolve("/workspace/packages/test-package", "./bin/cli.js"),
+                path.resolve(
+                    "/workspace/packages/test-package",
+                    "./bin/cli.js",
+                ),
             );
         });
     });

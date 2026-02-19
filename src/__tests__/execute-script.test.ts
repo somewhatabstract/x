@@ -1,8 +1,8 @@
-import {describe, expect, it, vi, beforeEach} from "vitest";
+import * as childProcess from "node:child_process";
+import {beforeEach, describe, expect, it, vi} from "vitest";
+import * as buildEnv from "../build-environment";
 import {executeScript} from "../execute-script";
 import type {BinInfo} from "../find-matching-bins";
-import * as childProcess from "node:child_process";
-import * as buildEnv from "../build-environment";
 
 // Mock child_process
 vi.mock("node:child_process", () => ({

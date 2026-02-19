@@ -1,7 +1,7 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import type {PackageInfo} from "./discover-packages";
-import { resolveBinPath } from "./resolve-bin-path";
+import {resolveBinPath} from "./resolve-bin-path";
 
 export interface BinInfo {
     packageName: string;
@@ -61,7 +61,6 @@ export async function findMatchingBins(
                     error,
                 );
             }
-            continue;
         }
     }
 

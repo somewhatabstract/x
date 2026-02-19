@@ -1,52 +1,54 @@
 {
-  "name": "@somewhatabstract/x",
-  "private": false,
-  "publishConfig": {
-    "access": "public",
-    "provenance": true
-  },
-  "bin": {
-    "x": "./dist/x.mjs"
-  },
-  "type": "module",
-  "version": "0.0.1",
-  "description": "Execute any bin defined by any package in a monorepo without needing to install that package",
-  "scripts": {
-    "build": "tsdown",
-    "dev": "tsdown --watch",
-    "lint": "echo \"No linting configured\"",
-    "typecheck": "tsc --noEmit --project tsconfig.json",
-    "typewatch": "pnpm typecheck --watch",
-    "test": "vitest",
-    "coverage": "vitest run --coverage",
-    "publish:ci": "git diff --stat --exit-code HEAD && pnpm build && changeset publish"
-  },
-  "bugs": {
-    "url": "https://github.com/somewhatabstract/x/issues"
-  },
-  "repository": "https://github.com/somewhatabstract/x",
-  "author": "Jeff Yates <jeff@somewhatabstract.com>",
-  "keywords": [],
-  "license": "MIT",
-  "packageManager": "pnpm@10.26.0",
-  "engines": {
-    "node": ">= 20",
-    "npm": "please-use-pnpm",
-    "yarn": "please-use-pnpm"
-  },
-  "devDependencies": {
-    "@changesets/cli": "^2.29.8",
-    "@codecov/rollup-plugin": "^1.9.1",
-    "@types/node": "^20.19.29",
-    "@types/yargs": "^17.0.35",
-    "@vitest/coverage-v8": "^4.0.17",
-    "tsdown": "0.20.0-beta.3",
-    "typescript": "^5.9.3",
-    "vitest": "^4.0.17"
-  },
-  "dependencies": {
-    "@manypkg/find-root": "^3.1.0",
-    "@manypkg/get-packages": "^3.1.0",
-    "yargs": "^18.0.0"
-  }
+    "name": "@somewhatabstract/x",
+    "private": false,
+    "publishConfig": {
+        "access": "public",
+        "provenance": true
+    },
+    "bin": {
+        "x": "./dist/x.mjs"
+    },
+    "type": "module",
+    "version": "0.0.1",
+    "description": "Execute any bin defined by any package in a monorepo without needing to install that package",
+    "scripts": {
+        "build": "tsdown",
+        "dev": "tsdown --watch",
+        "lint": "biome check",
+        "lint:fix": "biome check --write",
+        "typecheck": "tsc --noEmit --project tsconfig.json",
+        "typewatch": "pnpm typecheck --watch",
+        "test": "vitest",
+        "coverage": "vitest run --coverage",
+        "publish:ci": "git diff --stat --exit-code HEAD && pnpm build && changeset publish"
+    },
+    "bugs": {
+        "url": "https://github.com/somewhatabstract/x/issues"
+    },
+    "repository": "https://github.com/somewhatabstract/x",
+    "author": "Jeff Yates <jeff@somewhatabstract.com>",
+    "keywords": [],
+    "license": "MIT",
+    "packageManager": "pnpm@10.26.0",
+    "engines": {
+        "node": ">= 20",
+        "npm": "please-use-pnpm",
+        "yarn": "please-use-pnpm"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "^2.4.3",
+        "@changesets/cli": "^2.29.8",
+        "@codecov/rollup-plugin": "^1.9.1",
+        "@types/node": "^20.19.29",
+        "@types/yargs": "^17.0.35",
+        "@vitest/coverage-v8": "^4.0.17",
+        "tsdown": "0.20.0-beta.3",
+        "typescript": "^5.9.3",
+        "vitest": "^4.0.17"
+    },
+    "dependencies": {
+        "@manypkg/find-root": "^3.1.0",
+        "@manypkg/get-packages": "^3.1.0",
+        "yargs": "^18.0.0"
+    }
 }

@@ -77,7 +77,22 @@ export async function findMatchingBins(
                 }
             }
         } catch (error) {
-            // Skip packages that can't be read
+            // Skip packages that can't be read. Log malformed JSON so it can be diagnosed.
+            const err: any = error;
+            if (error instanceof SyntaxError) {
+                // Invalid JSON in package.json
+                console.warn(
+                    `Warning: Failed to parse package.json for package "${pkg.name}" at "${pkg.path}": invalid JSON.`,
+                );
+            } else if (err && err.code === "ENOENT") {
+                // package.json not found - this can be expected for some paths
+            } else {
+                // Other unexpected errors when reading package.json
+                console.warn(
+                    `Warning: Could not read package.json for package "${pkg.name}" at "${pkg.path}":`,
+                    error,
+                );
+            }
             continue;
         }
     }

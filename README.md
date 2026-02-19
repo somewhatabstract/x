@@ -71,7 +71,7 @@ x my-custom-script arg1 arg2
 1. **Workspace Detection**: Uses `@manypkg/find-root` to find the workspace root (supports npm, Yarn, pnpm, Lerna, Bun, Rush)
 2. **Package Discovery**: Uses `@manypkg/get-packages` to discover all packages in the workspace
 3. **Bin Matching**: Searches through package.json files to find bins matching your requested script name
-4. **Execution**: Executes the matched script directly (assumes executable with proper shebang)
+4. **Execution**: Executes the matched script directly via the OS (on Unix-like systems this requires an executable file with a shebang; on Windows the bin must be a directly runnable file such as a `.exe`, `.cmd`, or `.bat`)
 
 ## Requirements
 

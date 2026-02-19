@@ -74,7 +74,7 @@ export async function xImpl(
         }
 
         // Execute the script
-        const exitCode = await executeScript(bin, args);
+        const exitCode = await executeScript(bin, args, workspaceRoot);
 
         return {exitCode};
     } catch (error) {

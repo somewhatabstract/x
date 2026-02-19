@@ -27,6 +27,12 @@ export async function xImpl(
     options: XOptions = {},
 ): Promise<XResult> {
     try {
+        if (!scriptName || !scriptName.trim()) {
+            throw new HandledError("Script name cannot be empty");
+        }
+        if (scriptName.includes("/") || scriptName.includes("\\")) {
+            throw new HandledError("Script name cannot contain path separators");
+        }
         // Validate script name
         if (!scriptName || !scriptName.trim()) {
             throw new HandledError("Script name cannot be empty");

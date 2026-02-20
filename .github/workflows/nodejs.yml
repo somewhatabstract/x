@@ -21,16 +21,16 @@ jobs:
         os: [ubuntu-latest]
         node-version: [20.x]
     steps:
-    - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
         name: Install pnpm
         with:
           run_install: false
           package_json_file: "package.json"
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
         with:
           node-version: ${{ matrix.node-version }}
           cache: "pnpm"
@@ -47,7 +47,7 @@ jobs:
         run: pnpm typecheck
 
       - name: Changesets check
-        uses: Khan/actions@check-for-changeset-v1
+        uses: Khan/actions@973e081efd07f23c4e521e7f4c6b15c9257ee924
         if: |
           github.actor != 'dependabot[bot]' &&
           github.actor != 'dependabot-preview[bot]' &&
@@ -65,16 +65,16 @@ jobs:
         os: [ubuntu-latest]
         node-version: [20.x]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
         name: Install pnpm
         with:
           run_install: false
           package_json_file: "package.json"
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
         with:
           node-version: ${{ matrix.node-version }}
           cache: "pnpm"
@@ -87,7 +87,7 @@ jobs:
       - name: Run tests with coverage
         run: pnpm coverage
       - name: Upload coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
@@ -102,16 +102,16 @@ jobs:
         os: [ubuntu-latest]
         node-version: [20.x]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
         name: Install pnpm
         with:
           run_install: false
           package_json_file: "package.json"
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
         with:
           node-version: ${{ matrix.node-version }}
           cache: "pnpm"

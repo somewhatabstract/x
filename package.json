@@ -14,8 +14,8 @@
     "scripts": {
         "build": "tsdown",
         "dev": "tsdown --watch",
-        "lint": "biome check",
-        "lint:fix": "biome check --write --unsafe",
+        "lint": "biome check .",
+        "lint:fix": "pnpm lint --write --unsafe",
         "typecheck": "tsc --noEmit --project tsconfig.json",
         "typewatch": "pnpm typecheck --watch",
         "test": "vitest",

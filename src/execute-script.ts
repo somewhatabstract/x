@@ -1,6 +1,7 @@
 import {spawn} from "node:child_process";
 import {buildEnvironment} from "./build-environment";
 import type {BinInfo} from "./find-matching-bins";
+import {isNodeExecutable} from "./is-node-executable";
 
 /**
  * Execute a bin script with the given arguments.
@@ -20,8 +21,14 @@ export async function executeScript(
     // Build environment with npm/pnpm-style variables
     const env = await buildEnvironment(workspaceRoot, process.env);
 
+    // For .js/.mjs/.cjs files, invoke via node (matching npm behavior).
+    // The original binPath casing is preserved in the spawn call.
+    const [executable, spawnArgs] = isNodeExecutable(bin.binPath)
+        ? [process.execPath, [bin.binPath, ...args]]
+        : [bin.binPath, args];
+
     return new Promise((resolve) => {
-        const child = spawn(bin.binPath, args, {
+        const child = spawn(executable, spawnArgs, {
             // Don't change directory - execute in current directory
             // as if the bin were installed at workspace root
             stdio: "inherit",

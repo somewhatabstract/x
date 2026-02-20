@@ -13,7 +13,7 @@
     },
     "assist": {
         "enabled": true,
-        "includes": ["**", "!dist/**"]
+        "includes": ["**", "!dist/**", "!coverage/**"]
     },
     "overrides": [
         {

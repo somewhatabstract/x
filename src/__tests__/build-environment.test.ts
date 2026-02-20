@@ -137,7 +137,7 @@ describe("buildEnvironment", () => {
         expect(env.npm_execpath).toBe(process.execPath);
     });
 
-    it("should set npm_config_user_agent", async () => {
+    it("should include package name in npm_config_user_agent", async () => {
         // Arrange
         const workspaceRoot = "/test/workspace";
         const currentEnv = {PATH: "/usr/bin"};
@@ -149,10 +149,23 @@ describe("buildEnvironment", () => {
 
         // Assert
         expect(env.npm_config_user_agent).toContain("x/");
+    });
+
+    it("should include node version in npm_config_user_agent", async () => {
+        // Arrange
+        const workspaceRoot = "/test/workspace";
+        const currentEnv = {PATH: "/usr/bin"};
+
+        vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({}));
+
+        // Act
+        const env = await buildEnvironment(workspaceRoot, currentEnv);
+
+        // Assert
         expect(env.npm_config_user_agent).toContain("node/");
     });
 
-    it("should handle missing package.json gracefully", async () => {
+    it("should set npm_command to exec when package.json is missing", async () => {
         // Arrange
         const workspaceRoot = "/test/workspace";
         const currentEnv = {PATH: "/usr/bin"};
@@ -166,6 +179,21 @@ describe("buildEnvironment", () => {
 
         // Assert
         expect(env.npm_command).toBe("exec");
+    });
+
+    it("should set INIT_CWD when package.json is missing", async () => {
+        // Arrange
+        const workspaceRoot = "/test/workspace";
+        const currentEnv = {PATH: "/usr/bin"};
+
+        vi.mocked(fs.readFile).mockRejectedValue(
+            new Error("ENOENT: no such file"),
+        );
+
+        // Act
+        const env = await buildEnvironment(workspaceRoot, currentEnv);
+
+        // Assert
         expect(env.INIT_CWD).toBe(process.cwd());
     });
 
@@ -215,7 +243,7 @@ describe("buildEnvironment", () => {
         );
     });
 
-    it("should handle string fields without JSON conversion", async () => {
+    it("should set npm_package_license from workspace package.json", async () => {
         // Arrange
         const workspaceRoot = "/test/workspace";
         const currentEnv = {PATH: "/usr/bin"};
@@ -233,6 +261,25 @@ describe("buildEnvironment", () => {
 
         // Assert
         expect(env.npm_package_license).toBe("MIT");
+    });
+
+    it("should set npm_package_author from workspace package.json", async () => {
+        // Arrange
+        const workspaceRoot = "/test/workspace";
+        const currentEnv = {PATH: "/usr/bin"};
+
+        vi.mocked(fs.readFile).mockResolvedValue(
+            JSON.stringify({
+                name: "my-workspace",
+                license: "MIT",
+                author: "John Doe",
+            }),
+        );
+
+        // Act
+        const env = await buildEnvironment(workspaceRoot, currentEnv);
+
+        // Assert
         expect(env.npm_package_author).toBe("John Doe");
     });
 });

@@ -138,7 +138,7 @@ describe("discoverPackages", () => {
         expect(manypkg.getPackages).toHaveBeenCalledWith(workspaceRoot);
     });
 
-    it("should rethrow HandledError as is", async () => {
+    it("should rethrow HandledError type as is", async () => {
         // Arrange
         const workspaceRoot = "/test/workspace";
         const handledError = new HandledError("Test handled error");
@@ -150,10 +150,23 @@ describe("discoverPackages", () => {
 
         // Assert
         await expect(underTest).rejects.toThrow(HandledError);
+    });
+
+    it("should rethrow HandledError message as is", async () => {
+        // Arrange
+        const workspaceRoot = "/test/workspace";
+        const handledError = new HandledError("Test handled error");
+
+        vi.mocked(manypkg.getPackages).mockRejectedValue(handledError);
+
+        // Act
+        const underTest = () => discoverPackages(workspaceRoot);
+
+        // Assert
         await expect(underTest).rejects.toThrow("Test handled error");
     });
 
-    it("should wrap non-HandledError in HandledError", async () => {
+    it("should wrap non-HandledError in HandledError type", async () => {
         // Arrange
         const workspaceRoot = "/test/workspace";
         const error = new Error("Original error");
@@ -165,6 +178,19 @@ describe("discoverPackages", () => {
 
         // Assert
         await expect(underTest).rejects.toThrow(HandledError);
+    });
+
+    it("should use expected message when wrapping non-HandledError", async () => {
+        // Arrange
+        const workspaceRoot = "/test/workspace";
+        const error = new Error("Original error");
+
+        vi.mocked(manypkg.getPackages).mockRejectedValue(error);
+
+        // Act
+        const underTest = () => discoverPackages(workspaceRoot);
+
+        // Assert
         await expect(underTest).rejects.toThrow("Failed to discover packages");
     });
 });

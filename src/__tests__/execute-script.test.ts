@@ -1,7 +1,7 @@
 import * as childProcess from "node:child_process";
 import {beforeEach, describe, expect, it, vi} from "vitest";
 import * as buildEnv from "../build-environment";
-import {executeScript, isNodeExecutable} from "../execute-script";
+import {executeScript} from "../execute-script";
 import type {BinInfo} from "../find-matching-bins";
 
 // Mock child_process
@@ -378,52 +378,6 @@ describe("executeScript", () => {
     });
 });
 
-describe("isNodeExecutable", () => {
-    it("should return true for .js files", () => {
-        expect(isNodeExecutable("/path/to/script.js")).toBe(true);
-    });
-
-    it("should return true for .mjs files", () => {
-        expect(isNodeExecutable("/path/to/script.mjs")).toBe(true);
-    });
-
-    it("should return true for .cjs files", () => {
-        expect(isNodeExecutable("/path/to/script.cjs")).toBe(true);
-    });
-
-    it("should return true for .JS files (case-insensitive)", () => {
-        expect(isNodeExecutable("/path/to/script.JS")).toBe(true);
-    });
-
-    it("should return true for .Js files (case-insensitive)", () => {
-        expect(isNodeExecutable("/path/to/script.Js")).toBe(true);
-    });
-
-    it("should return true for .MJS files (case-insensitive)", () => {
-        expect(isNodeExecutable("/path/to/script.MJS")).toBe(true);
-    });
-
-    it("should return true for .CJS files (case-insensitive)", () => {
-        expect(isNodeExecutable("/path/to/script.CJS")).toBe(true);
-    });
-
-    it("should return true for .Mjs files (case-insensitive)", () => {
-        expect(isNodeExecutable("/path/to/script.Mjs")).toBe(true);
-    });
-
-    it("should return false for files with no extension", () => {
-        expect(isNodeExecutable("/path/to/script")).toBe(false);
-    });
-
-    it("should return false for .sh files", () => {
-        expect(isNodeExecutable("/path/to/script.sh")).toBe(false);
-    });
-
-    it("should return false for files with .js in the middle (e.g. script.js.bak)", () => {
-        expect(isNodeExecutable("/path/to/script.js.bak")).toBe(false);
-    });
-});
-
 describe("executeScript - node-executable extensions", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -740,14 +694,44 @@ describe("executeScript - node-executable extensions", () => {
         vi.mocked(childProcess.spawn).mockReturnValue(mockChild as any);
 
         // Act
-        const exitCode = await executeScript(bin, [], "/test/workspace");
+        await executeScript(bin, [], "/test/workspace");
 
-        // Assert: invoked directly and returns 1 on error
+        // Assert: invoked directly, not via node
         expect(childProcess.spawn).toHaveBeenCalledWith(
             "/test/package/bin/noperm.sh",
             [],
             expect.anything(),
         );
+    });
+
+    it("should return 1 when non-executable bash script errors", async () => {
+        // Arrange
+        const bin: BinInfo = {
+            packageName: "test-package",
+            packagePath: "/test/package",
+            binName: "test-bin",
+            binPath: "/test/package/bin/noperm.sh",
+        };
+
+        vi.mocked(buildEnv.buildEnvironment).mockResolvedValue({});
+
+        const mockChild = {
+            on: vi.fn((event, callback) => {
+                if (event === "error") {
+                    setTimeout(() => {
+                        const error: any = new Error("EACCES");
+                        error.code = "EACCES";
+                        callback(error);
+                    }, 0);
+                }
+            }),
+        };
+        vi.mocked(childProcess.spawn).mockReturnValue(mockChild as any);
+
+        // Act
+        const exitCode = await executeScript(bin, [], "/test/workspace");
+
+        // Assert
         expect(exitCode).toBe(1);
     });
 

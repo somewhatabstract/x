@@ -8,7 +8,7 @@ on:
 
   push:
     branches:
-    - main
+      - main
 
 jobs:
   lint:
@@ -21,40 +21,39 @@ jobs:
         os: [ubuntu-latest]
         node-version: [20.x]
     steps:
-    - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
-    - uses: pnpm/action-setup@v4
-      name: Install pnpm
-      with:
-        run_install: false
-        package_json_file: 'package.json'
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+        name: Install pnpm
+        with:
+          run_install: false
+          package_json_file: "package.json"
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v6
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'pnpm'
-        cache-dependency-path: 'pnpm-lock.yaml'
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+          cache-dependency-path: "pnpm-lock.yaml"
 
-    - name: Install Dependencies
-      shell: bash
-      run: pnpm install --frozen-lockfile
+      - name: Install Dependencies
+        shell: bash
+        run: pnpm install --frozen-lockfile
 
-    - name: Lint
-      run: pnpm lint
+      - name: Lint
+        run: pnpm lint
 
-    - name: Static Types
-      run: pnpm typecheck
+      - name: Static Types
+        run: pnpm typecheck
 
-    - name: Changesets check
-      uses: Khan/actions@check-for-changeset-v1
-      if: |
-        github.actor != 'dependabot[bot]' &&
-        github.actor != 'dependabot-preview[bot]' &&
-        github.event_name == 'pull_request'
-      with:
-        exclude: .github/,.storybook/
-
+      - name: Changesets check
+        uses: Khan/actions@973e081efd07f23c4e521e7f4c6b15c9257ee924
+        if: |
+          github.actor != 'dependabot[bot]' &&
+          github.actor != 'dependabot-preview[bot]' &&
+          github.event_name == 'pull_request'
+        with:
+          exclude: .github/,.storybook/
 
   coverage:
     name: Update test coverage
@@ -66,32 +65,31 @@ jobs:
         os: [ubuntu-latest]
         node-version: [20.x]
     steps:
-    - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
-    - uses: pnpm/action-setup@v4
-      name: Install pnpm
-      with:
-        run_install: false
-        package_json_file: 'package.json'
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+        name: Install pnpm
+        with:
+          run_install: false
+          package_json_file: "package.json"
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v6
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'pnpm'
-        cache-dependency-path: 'pnpm-lock.yaml'
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+          cache-dependency-path: "pnpm-lock.yaml"
 
-    - name: Install Dependencies
-      shell: bash
-      run: pnpm install --frozen-lockfile
+      - name: Install Dependencies
+        shell: bash
+        run: pnpm install --frozen-lockfile
 
-    - name: Run tests with coverage
-      run: pnpm coverage
-    - name: Upload coverage
-      uses: codecov/codecov-action@v5
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
+      - name: Run tests with coverage
+        run: pnpm coverage
+      - name: Upload coverage
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   build:
     needs: [coverage, lint]
@@ -104,28 +102,28 @@ jobs:
         os: [ubuntu-latest]
         node-version: [20.x]
     steps:
-    - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
-    - uses: pnpm/action-setup@v4
-      name: Install pnpm
-      with:
-        run_install: false
-        package_json_file: 'package.json'
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+        name: Install pnpm
+        with:
+          run_install: false
+          package_json_file: "package.json"
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v6
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'pnpm'
-        cache-dependency-path: 'pnpm-lock.yaml'
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+          cache-dependency-path: "pnpm-lock.yaml"
 
-    - name: Install Dependencies
-      shell: bash
-      run: pnpm install --frozen-lockfile
+      - name: Install Dependencies
+        shell: bash
+        run: pnpm install --frozen-lockfile
 
-    - name: Run build
-      env:
-        # We only want to upload bundle analysis for a PR once,
-        # so we only provide a token for the ubuntu-latest job.
-        CODECOV_TOKEN: ${{ matrix.os == 'ubuntu-latest' && secrets.CODECOV_TOKEN || '' }}
-      run: pnpm build
+      - name: Run build
+        env:
+          # We only want to upload bundle analysis for a PR once,
+          # so we only provide a token for the ubuntu-latest job.
+          CODECOV_TOKEN: ${{ matrix.os == 'ubuntu-latest' && secrets.CODECOV_TOKEN || '' }}
+        run: pnpm build

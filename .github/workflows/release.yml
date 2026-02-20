@@ -35,19 +35,19 @@ jobs:
       contents: write # For creating release PRs
       pull-requests: write # For creating release PRs
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
         name: Install pnpm
         with:
           run_install: false
           package_json_file: package.json
 
       - name: Use Node.js 20.x
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
         with:
           node-version: 20.x
           cache: pnpm
@@ -82,7 +82,7 @@ jobs:
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@6a0a831ff30acef54f2c6aa1cbbc1096b066edaf
         with:
           publish: pnpm publish:ci
         env:
@@ -91,8 +91,5 @@ jobs:
           # the account of someone with appropriate access levels and given the
           # repo scope.
           GITHUB_TOKEN: ${{ secrets.BOT_PA_TOKEN }}
-          # This is the token used to publish to npm when OIDC trusted
-          # publishing isn't yet setup
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           # This is used for the bundle analysis
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

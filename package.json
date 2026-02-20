@@ -42,7 +42,7 @@
         "@types/node": "^20.19.29",
         "@types/yargs": "^17.0.35",
         "@vitest/coverage-v8": "^4.0.17",
-        "tsdown": "0.20.0-beta.3",
+        "tsdown": "0.20.3",
         "typescript": "^5.9.3",
         "vitest": "^4.0.17"
     },

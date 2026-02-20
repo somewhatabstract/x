@@ -1,7 +1,7 @@
-import {describe, expect, it, vi, beforeEach} from "vitest";
+import * as manypkg from "@manypkg/get-packages";
+import {beforeEach, describe, expect, it, vi} from "vitest";
 import {discoverPackages} from "../discover-packages";
 import {HandledError} from "../errors";
-import * as manypkg from "@manypkg/get-packages";
 
 // Mock @manypkg/get-packages
 vi.mock("@manypkg/get-packages", () => ({
@@ -165,8 +165,6 @@ describe("discoverPackages", () => {
 
         // Assert
         await expect(underTest).rejects.toThrow(HandledError);
-        await expect(underTest).rejects.toThrow(
-            "Failed to discover packages: Original error",
-        );
+        await expect(underTest).rejects.toThrow("Failed to discover packages");
     });
 });

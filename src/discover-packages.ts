@@ -26,15 +26,10 @@ export async function discoverPackages(
             path: pkg.dir,
             version: pkg.packageJson.version || "unknown",
         }));
-    } catch (error: any) {
+    } catch (error: unknown) {
         if (error instanceof HandledError) {
             throw error;
         }
-
-        const errorMessage =
-            (error as any)?.message ?? String(error);
-        throw new HandledError(
-            `Failed to discover packages: ${errorMessage}`,
-        );
+        throw new HandledError(`Failed to discover packages`, {cause: error});
     }
 }

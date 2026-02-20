@@ -1,7 +1,7 @@
-import {describe, expect, it, vi, beforeEach} from "vitest";
-import {buildEnvironment} from "../build-environment";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
+import {beforeEach, describe, expect, it, vi} from "vitest";
+import {buildEnvironment} from "../build-environment";
 
 // Mock the fs module
 vi.mock("node:fs/promises", () => ({

@@ -1,6 +1,6 @@
 import {spawn} from "node:child_process";
-import type {BinInfo} from "./find-matching-bins";
 import {buildEnvironment} from "./build-environment";
+import type {BinInfo} from "./find-matching-bins";
 
 /**
  * Execute a bin script with the given arguments.
@@ -28,7 +28,7 @@ export async function executeScript(
             env,
         });
 
-        child.on("error", (err) => {
+        child.on("error", (_) => {
             // Handle spawn errors (ENOENT, EACCES, etc.)
             resolve(1);
         });

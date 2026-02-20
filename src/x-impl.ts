@@ -1,8 +1,8 @@
-import {findWorkspaceRoot} from "./find-workspace-root";
 import {discoverPackages} from "./discover-packages";
-import {findMatchingBins} from "./find-matching-bins";
-import {executeScript} from "./execute-script";
 import {HandledError} from "./errors";
+import {executeScript} from "./execute-script";
+import {findMatchingBins} from "./find-matching-bins";
+import {findWorkspaceRoot} from "./find-workspace-root";
 
 export interface XOptions {
     dryRun?: boolean;
@@ -31,9 +31,10 @@ export async function xImpl(
             throw new HandledError("Script name cannot be empty");
         }
         if (scriptName.includes("/") || scriptName.includes("\\")) {
-            throw new HandledError("Script name cannot contain path separators");
+            throw new HandledError(
+                "Script name cannot contain path separators",
+            );
         }
-
 
         // Find workspace root
         const workspaceRoot = await findWorkspaceRoot();

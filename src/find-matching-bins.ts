@@ -1,7 +1,7 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import type {PackageInfo} from "./discover-packages";
-import { resolveBinPath } from "./resolve-bin-path";
+import {resolveBinPath} from "./resolve-bin-path";
 
 export interface BinInfo {
     packageName: string;
@@ -44,15 +44,19 @@ export async function findMatchingBins(
                 binName: binName,
                 binPath: resolvedBinPath,
             });
-        } catch (error) {
+        } catch (error: unknown) {
             // Skip packages that can't be read. Log malformed JSON so it can be diagnosed.
-            const err: any = error;
             if (error instanceof SyntaxError) {
                 // Invalid JSON in package.json
                 console.warn(
                     `Warning: Failed to parse package.json for package "${pkg.name}" at "${pkg.path}": invalid JSON.`,
                 );
-            } else if (err && err.code === "ENOENT") {
+            } else if (
+                error &&
+                typeof error === "object" &&
+                "code" in error &&
+                error.code === "ENOENT"
+            ) {
                 // package.json not found - this can be expected for some paths
             } else {
                 // Other unexpected errors when reading package.json
@@ -61,7 +65,6 @@ export async function findMatchingBins(
                     error,
                 );
             }
-            continue;
         }
     }
 

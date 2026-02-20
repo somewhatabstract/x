@@ -1,8 +1,8 @@
-import {describe, expect, it, beforeEach, afterEach} from "vitest";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import {findWorkspaceRoot} from "../find-workspace-root";
+import {afterEach, beforeEach, describe, expect, it} from "vitest";
 import {HandledError} from "../errors";
+import {findWorkspaceRoot} from "../find-workspace-root";
 
 describe("findWorkspaceRoot", () => {
     const testDir = path.join("/tmp", "test-workspace-root");

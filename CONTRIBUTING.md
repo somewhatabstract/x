@@ -65,6 +65,6 @@ Running the build will execute tests first.
 
 ### Publishing
 
-Publishing is automated through our use of [changesets][1]. When a PR is merged, a release PR is created that bundles all the changes since the last release. This PR is then merged and the changeset is published to npm.
+Publishing is automated through our use of [changesets][1]. When a PR is merged to `main`, a release PR is created that bundles all the changes since the last release. When we are ready to release, this bundled PR is merged to `main` which triggers changesets to publish to npm via trusted publishing.
 
 [1]:https://github.com/changesets/changesets/blob/main/README.md#documentation

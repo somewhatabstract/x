@@ -417,4 +417,90 @@ describe("findMatchingBins", () => {
         // Assert
         expect(matches).toHaveLength(1);
     });
+
+    it("should return empty array when package.json contains invalid JSON", async () => {
+        // Arrange
+        const packages: PackageInfo[] = [
+            {
+                name: "invalid-json-pkg",
+                path: "/test/path",
+                version: "1.0.0",
+            },
+        ];
+
+        vi.mocked(fs.readFile).mockResolvedValue("{ this is not valid json");
+
+        // Act
+        const matches = await findMatchingBins(packages, "invalid-json-pkg");
+
+        // Assert
+        expect(matches).toHaveLength(0);
+    });
+
+    it("should warn when package.json contains invalid JSON", async () => {
+        // Arrange
+        const packages: PackageInfo[] = [
+            {
+                name: "invalid-json-pkg",
+                path: "/test/path",
+                version: "1.0.0",
+            },
+        ];
+
+        vi.mocked(fs.readFile).mockResolvedValue("{ this is not valid json");
+
+        // Act
+        await findMatchingBins(packages, "invalid-json-pkg");
+
+        // Assert
+        expect(console.warn).toHaveBeenCalledWith(
+            expect.stringContaining("invalid JSON"),
+        );
+    });
+
+    it("should return empty array when package.json file is not found", async () => {
+        // Arrange
+        const packages: PackageInfo[] = [
+            {
+                name: "missing-pkg",
+                path: "/test/path",
+                version: "1.0.0",
+            },
+        ];
+
+        const enoentError = Object.assign(
+            new Error("ENOENT: no such file or directory"),
+            {code: "ENOENT"},
+        );
+        vi.mocked(fs.readFile).mockRejectedValue(enoentError);
+
+        // Act
+        const matches = await findMatchingBins(packages, "missing-pkg");
+
+        // Assert
+        expect(matches).toHaveLength(0);
+    });
+
+    it("should not warn when package.json file is not found", async () => {
+        // Arrange
+        const packages: PackageInfo[] = [
+            {
+                name: "missing-pkg",
+                path: "/test/path",
+                version: "1.0.0",
+            },
+        ];
+
+        const enoentError = Object.assign(
+            new Error("ENOENT: no such file or directory"),
+            {code: "ENOENT"},
+        );
+        vi.mocked(fs.readFile).mockRejectedValue(enoentError);
+
+        // Act
+        await findMatchingBins(packages, "missing-pkg");
+
+        // Assert
+        expect(console.warn).not.toHaveBeenCalled();
+    });
 });

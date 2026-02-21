@@ -27,7 +27,7 @@ To work in the `x` repository, follow these steps:
 2. Install `pnpm`
    - `corepack enable pnpm`
    - `corepack prepare pnpm --activate`
-3. Run `pnpm install` to install the dependencies
+3. Run `pnpm install` (or `pnpm i`) to install the dependencies
 
 You can now work on `x`. We prefer [🔗Visual Studio Code](https://code.visualstudio.com/) as our development environment (it's cross-platform and awesome), but please use what you feel comfortable with (we'll even forgive you for using vim).
 

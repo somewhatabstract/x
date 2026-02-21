@@ -27,7 +27,7 @@ To work in the `x` repository, follow these steps:
 2. Install `pnpm`
    - `corepack enable pnpm`
    - `corepack prepare pnpm --activate`
-3. Run `pnpm install` to install the dependencies
+3. Run `pnpm install` (or `pnpm i`) to install the dependencies
 
 You can now work on `x`. We prefer [🔗Visual Studio Code](https://code.visualstudio.com/) as our development environment (it's cross-platform and awesome), but please use what you feel comfortable with (we'll even forgive you for using vim).
 
@@ -65,6 +65,6 @@ Running the build will execute tests first.
 
 ### Publishing
 
-Publishing is automated through our use of [changesets][1]. When a PR is merged, a release PR is created that bundles all the changes since the last release. This PR is then merged and the changeset is published to npm.
+Publishing is automated through our use of [changesets][1]. When a PR is merged to `main`, a release PR is created that bundles all the changes since the last release. When we are ready to release, this bundled PR is merged to `main` which triggers changesets to publish to npm via trusted publishing.
 
 [1]:https://github.com/changesets/changesets/blob/main/README.md#documentation

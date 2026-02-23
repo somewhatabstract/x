@@ -2,4 +2,4 @@
 "@somewhatabstract/x": patch
 ---
 
-Add missing test coverage for `find-matching-bins`
+Add test coverage for all source files including the CLI entry point

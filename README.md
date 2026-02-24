@@ -29,12 +29,12 @@ yarn global add @somewhatabstract/x
 
 ```bash
 # Execute a bin script from any package in the workspace
-x <script-name> -- [...args]
+x <script-name> [-- <args...>]
 
 # Preview what would be executed (dry-run mode)
 x --dry-run <script-name>
 
-# Pass arguments to the script
+# Pass arguments to the script (use `--` when args might look like x's own options)
 x my-script -- --flag value
 ```
 

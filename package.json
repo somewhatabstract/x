@@ -8,6 +8,9 @@
     "bin": {
         "x": "./dist/x.mjs"
     },
+    "files": [
+        "dist"
+    ],
     "type": "module",
     "version": "0.1.0",
     "description": "Execute any bin defined by any package in a monorepo without needing to install that package",

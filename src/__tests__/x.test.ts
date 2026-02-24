@@ -13,7 +13,7 @@ const buildYargsMock = (parsedArgs: Record<string, unknown>) => {
         alias: vi.fn().mockReturnThis(),
         version: vi.fn().mockReturnThis(),
         example: vi.fn().mockReturnThis(),
-        strict: vi.fn().mockReturnThis(),
+        parserConfiguration: vi.fn().mockReturnThis(),
         parseSync: vi.fn().mockReturnValue(parsedArgs),
         // Needed when the command builder callback calls yargs.positional()
         positional: vi.fn().mockReturnThis(),
@@ -34,16 +34,20 @@ const buildYargsMock = (parsedArgs: Record<string, unknown>) => {
 
 describe("bin/x", () => {
     let processExitSpy: ReturnType<typeof vi.spyOn>;
+    let originalArgv: string[];
 
     beforeEach(() => {
         vi.resetModules();
+        originalArgv = process.argv;
         processExitSpy = vi
             .spyOn(process, "exit")
             .mockImplementation(() => undefined as never);
         vi.spyOn(console, "error").mockImplementation(() => {});
+        vi.spyOn(console, "warn").mockImplementation(() => {});
     });
 
     afterEach(() => {
+        process.argv = originalArgv;
         vi.restoreAllMocks();
     });
 
@@ -69,6 +73,7 @@ describe("bin/x", () => {
             expect.any(Array),
             expect.any(Object),
         );
+        expect(console.warn).not.toHaveBeenCalled();
     });
 
     it("should call xImpl with args from argv underscore field", async () => {
@@ -82,6 +87,7 @@ describe("bin/x", () => {
                 "dry-run": false,
             }),
         );
+        process.argv = ["node", "x.mjs", "my-script", "--", "--flag", "value"];
 
         // Act
         await import("../bin/x");
@@ -93,6 +99,7 @@ describe("bin/x", () => {
             ["--flag", "value"],
             expect.any(Object),
         );
+        expect(console.warn).not.toHaveBeenCalled();
     });
 
     it("should call xImpl with dryRun true when dry-run argv is true", async () => {
@@ -117,6 +124,7 @@ describe("bin/x", () => {
             expect.any(Array),
             {dryRun: true},
         );
+        expect(console.warn).not.toHaveBeenCalled();
     });
 
     it("should call xImpl with dryRun false when dry-run argv is false", async () => {
@@ -141,6 +149,7 @@ describe("bin/x", () => {
             expect.any(Array),
             {dryRun: false},
         );
+        expect(console.warn).not.toHaveBeenCalled();
     });
 
     it("should default to empty array when argv underscore field is falsy", async () => {
@@ -165,6 +174,7 @@ describe("bin/x", () => {
             [],
             expect.any(Object),
         );
+        expect(console.warn).not.toHaveBeenCalled();
     });
 
     it("should exit with the exit code returned by xImpl", async () => {
@@ -186,6 +196,7 @@ describe("bin/x", () => {
 
         // Assert
         expect(processExitSpy).toHaveBeenCalledWith(42);
+        expect(console.warn).not.toHaveBeenCalled();
     });
 
     it("should exit with 1 when xImpl throws an unexpected error", async () => {
@@ -232,5 +243,153 @@ describe("bin/x", () => {
             "Unexpected error:",
             unexpectedError,
         );
+    });
+
+    it("should pass unknown flag args to xImpl when user omits --", async () => {
+        // Arrange
+        const xImplMock = vi.fn().mockResolvedValue({exitCode: 0});
+        vi.doMock("../x-impl", () => ({xImpl: xImplMock}));
+        vi.doMock("yargs", () =>
+            buildYargsMock({
+                "script-name": "my-script",
+                _: ["--unknown-flag", "value"],
+                "dry-run": false,
+            }),
+        );
+        process.argv = [
+            "node",
+            "x.mjs",
+            "my-script",
+            "--unknown-flag",
+            "value",
+        ];
+
+        // Act
+        await import("../bin/x");
+        await flushPromises();
+
+        // Assert
+        expect(xImplMock).toHaveBeenCalledWith(
+            "my-script",
+            ["--unknown-flag", "value"],
+            expect.any(Object),
+        );
+    });
+
+    it("should show a tip when args contain flags and -- was not used", async () => {
+        // Arrange
+        vi.doMock("../x-impl", () => ({
+            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
+        }));
+        vi.doMock("yargs", () =>
+            buildYargsMock({
+                "script-name": "my-script",
+                _: ["--unknown-flag", "value"],
+                "dry-run": false,
+            }),
+        );
+        process.argv = [
+            "node",
+            "x.mjs",
+            "my-script",
+            "--unknown-flag",
+            "value",
+        ];
+
+        // Act
+        await import("../bin/x");
+        await flushPromises();
+
+        // Assert
+        expect(console.warn).toHaveBeenCalledWith(
+            `Tip: To pass flags to "my-script", use '--' to separate them:`,
+        );
+    });
+
+    it("should show the corrected command in the tip when args contain flags without --", async () => {
+        // Arrange
+        vi.doMock("../x-impl", () => ({
+            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
+        }));
+        vi.doMock("yargs", () =>
+            buildYargsMock({
+                "script-name": "my-script",
+                _: ["--unknown-flag", "value"],
+                "dry-run": false,
+            }),
+        );
+        process.argv = [
+            "node",
+            "x.mjs",
+            "my-script",
+            "--unknown-flag",
+            "value",
+        ];
+
+        // Act
+        await import("../bin/x");
+        await flushPromises();
+
+        // Assert
+        expect(console.warn).toHaveBeenCalledWith(
+            "  x my-script -- --unknown-flag value",
+        );
+    });
+
+    it("should not show a tip when -- was used before flag args", async () => {
+        // Arrange
+        vi.doMock("../x-impl", () => ({
+            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
+        }));
+        vi.doMock("yargs", () =>
+            buildYargsMock({
+                "script-name": "my-script",
+                _: ["--unknown-flag", "value"],
+                "dry-run": false,
+            }),
+        );
+        process.argv = [
+            "node",
+            "x.mjs",
+            "my-script",
+            "--",
+            "--unknown-flag",
+            "value",
+        ];
+
+        // Act
+        await import("../bin/x");
+        await flushPromises();
+
+        // Assert
+        expect(console.warn).not.toHaveBeenCalled();
+    });
+
+    it("should not show a tip when args contain no flag-like values", async () => {
+        // Arrange
+        vi.doMock("../x-impl", () => ({
+            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
+        }));
+        vi.doMock("yargs", () =>
+            buildYargsMock({
+                "script-name": "my-script",
+                _: ["positional-arg", "another-arg"],
+                "dry-run": false,
+            }),
+        );
+        process.argv = [
+            "node",
+            "x.mjs",
+            "my-script",
+            "positional-arg",
+            "another-arg",
+        ];
+
+        // Act
+        await import("../bin/x");
+        await flushPromises();
+
+        // Assert
+        expect(console.warn).not.toHaveBeenCalled();
     });
 });

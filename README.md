@@ -1,12 +1,13 @@
 # x
 
-Execute any bin defined by any package in a monorepo without needing to install that package.
+Execute any bin defined by any package within a monorepo without needing to install that package at the root.
 
 ## Overview
 
 `x` is a tool for monorepos that allows you to execute binary scripts from any package in your workspace without installing them globally or in your current package. It automatically discovers all packages in your workspace and finds the matching bin script.
 
 **Supports multiple package managers:**
+
 - 📦 npm workspaces
 - 🧶 Yarn (classic and modern)
 - 📌 pnpm workspaces
@@ -28,32 +29,16 @@ yarn global add @somewhatabstract/x
 
 ```bash
 # Execute a bin script from any package in the workspace
-x <script-name> [...args]
+x <script-name> -- [...args]
 
 # Preview what would be executed (dry-run mode)
 x --dry-run <script-name>
 
 # Pass arguments to the script
-x tsc --noEmit
-x eslint src/ --fix
-x jest --watch
+x my-script -- --noEmit
 ```
 
-### Examples
-
-```bash
-# Run TypeScript compiler from any package that provides it
-x tsc --noEmit
-
-# Run ESLint from any package in the workspace
-x eslint src/
-
-# Preview which jest binary would be executed
-x --dry-run jest
-
-# Run a custom script with arguments
-x my-custom-script arg1 arg2
-```
+This only executes bin scripts defined by packages in your workspace, not their dependencies. The bin must be an executable file with a shebang (on Unix-like systems) or a directly runnable file (on Windows), or a JS script that can be executed with Node.js.
 
 ## Features
 
@@ -71,7 +56,7 @@ x my-custom-script arg1 arg2
 1. **Workspace Detection**: Uses `@manypkg/find-root` to find the workspace root (supports npm, Yarn, pnpm, Lerna, Bun, Rush)
 2. **Package Discovery**: Uses `@manypkg/get-packages` to discover all packages in the workspace
 3. **Bin Matching**: Searches through package.json files to find bins matching your requested script name
-4. **Execution**: Executes the matched script directly via the OS (on Unix-like systems this requires an executable file with a shebang; on Windows the bin must be a directly runnable file such as a `.exe`, `.cmd`, or `.bat`)
+4. **Execution**: Executes the matched script directly via the OS (on Unix-like systems this requires an executable file with a shebang; on Windows the bin must be a directly runnable file such as a `.exe`, `.cmd`, or `.bat`); or via Node.js if it's a JS file
 
 ## Requirements
 
@@ -113,21 +98,6 @@ pnpm build
 ./dist/x.mjs <script-name>
 ```
 
-## Architecture
-
-The implementation follows a modular design with separate concerns:
-
-- `errors.ts` - Custom error types for user-friendly messages
-- `find-workspace-root.ts` - Workspace root detection using @manypkg/find-root
-- `discover-packages.ts` - Package discovery via @manypkg/get-packages
-- `find-matching-bins.ts` - Bin script matching logic
-- `execute-script.ts` - Direct script execution
-- `build-environment.ts` - npm/pnpm environment variable construction
-- `resolve-bin-path.ts` - Bin path resolution with security validation (path traversal protection)
-- `x-impl.ts` - Main orchestration logic
-- `bin/x.ts` - CLI entry point with yargs
-
 ## License
 
 MIT
-

@@ -35,7 +35,7 @@ x <script-name> -- [...args]
 x --dry-run <script-name>
 
 # Pass arguments to the script
-x my-script -- --noEmit
+x my-script -- --flag value
 ```
 
 This only executes bin scripts defined by packages in your workspace, not their dependencies. The bin must be an executable file with a shebang (on Unix-like systems) or a directly runnable file (on Windows), or a JS script that can be executed with Node.js.

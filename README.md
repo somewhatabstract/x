@@ -56,7 +56,9 @@ This only executes bin scripts defined by packages in your workspace, not their 
 1. **Workspace Detection**: Uses `@manypkg/find-root` to find the workspace root (supports npm, Yarn, pnpm, Lerna, Bun, Rush)
 2. **Package Discovery**: Uses `@manypkg/get-packages` to discover all packages in the workspace
 3. **Bin Matching**: Searches through package.json files to find bins matching your requested script name
-4. **Execution**: Executes the matched script directly via the OS (on Unix-like systems this requires an executable file with a shebang; on Windows the bin must be a directly runnable file such as a `.exe`, `.cmd`, or `.bat`); or via Node.js if it's a JS file
+4. **Execution**: Executes the matched script either directly via the OS or via Node.js:
+   - **Direct OS execution**: On Unix-like systems this requires an executable file with a shebang; on Windows the bin must be a directly runnable file such as a `.exe`, `.cmd`, or `.bat`.
+   - **Node.js execution**: If the bin is a JS file, it is executed with Node.js.
 
 ## Requirements
 

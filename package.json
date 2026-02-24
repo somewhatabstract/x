@@ -9,7 +9,7 @@
         "x": "./dist/x.mjs"
     },
     "type": "module",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "description": "Execute any bin defined by any package in a monorepo without needing to install that package",
     "scripts": {
         "build": "tsdown",

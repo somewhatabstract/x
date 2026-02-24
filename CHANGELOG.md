@@ -1,5 +1,11 @@
 # @somewhatabstract/x
 
+## 0.1.1
+
+### Patch Changes
+
+- 7b2f95a: Update readme to be more correct and only bundle the dist folder in the published package.
+
 ## 0.1.0
 
 ### Minor Changes

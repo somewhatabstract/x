@@ -7,7 +7,7 @@ export default defineConfig({
     sourcemap: false,
     dts: {
         oxc: true,
-        tsconfig: "tsconfig-types.json"
+        tsconfig: "tsconfig-types.json",
     },
     plugins: [
         process.env.CODECOV_TOKEN

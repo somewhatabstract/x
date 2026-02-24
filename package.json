@@ -23,6 +23,7 @@
         "typewatch": "pnpm typecheck --watch",
         "test": "vitest",
         "coverage": "vitest run --coverage",
+        "prepublishOnly": "pnpm build",
         "publish:ci": "git diff --stat --exit-code HEAD && pnpm build && changeset publish"
     },
     "bugs": {

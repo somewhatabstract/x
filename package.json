@@ -8,6 +8,9 @@
     "bin": {
         "x": "./dist/x.mjs"
     },
+    "files": [
+        "dist"
+    ],
     "type": "module",
     "version": "0.1.0",
     "description": "Execute any bin defined by any package in a monorepo without needing to install that package",
@@ -20,6 +23,7 @@
         "typewatch": "pnpm typecheck --watch",
         "test": "vitest",
         "coverage": "vitest run --coverage",
+        "prepublishOnly": "pnpm build",
         "publish:ci": "git diff --stat --exit-code HEAD && pnpm build && changeset publish"
     },
     "bugs": {

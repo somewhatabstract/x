@@ -8,21 +8,14 @@ const rawArgs = hideBin(process.argv);
 const argv = yargs(rawArgs)
     .usage("Usage: $0 <script-name> [...args]")
     .command(
-        "$0 <script-name> [args..]",
+        "$0 <script-name>",
         "Execute a bin script from any package in the workspace",
         (yargs) => {
-            return yargs
-                .positional("script-name", {
-                    describe: "Name of the bin script to execute",
-                    type: "string",
-                    demandOption: true,
-                })
-                .positional("args", {
-                    describe: "Arguments to pass to the script",
-                    type: "string",
-                    array: true,
-                    default: [],
-                });
+            return yargs.positional("script-name", {
+                describe: "Name of the bin script to execute",
+                type: "string",
+                demandOption: true,
+            });
         },
     )
     .option("dry-run", {
@@ -49,7 +42,7 @@ const options = {
 };
 
 // If any args look like flags and -- was not used, warn the user and suggest
-// using -- to explicitly separate script arguments from x's own options.
+// using -- to explicitly separate flag arguments from x's own options.
 if (!rawArgs.includes("--")) {
     const flagLikeArgs = args.filter(
         (arg) => typeof arg === "string" && arg.startsWith("-"),

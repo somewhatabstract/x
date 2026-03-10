@@ -392,4 +392,61 @@ describe("bin/x", () => {
         // Assert
         expect(console.warn).not.toHaveBeenCalled();
     });
+
+    it("should pass positional args to xImpl when user omits --", async () => {
+        // Arrange
+        const xImplMock = vi.fn().mockResolvedValue({exitCode: 0});
+        vi.doMock("../x-impl", () => ({xImpl: xImplMock}));
+        vi.doMock("yargs", () =>
+            buildYargsMock({
+                "script-name": "e2e",
+                _: ["setup", "verify"],
+                "dry-run": false,
+            }),
+        );
+        process.argv = ["node", "x.mjs", "e2e", "setup", "verify"];
+
+        // Act
+        await import("../bin/x");
+        await flushPromises();
+
+        // Assert
+        expect(xImplMock).toHaveBeenCalledWith(
+            "e2e",
+            ["setup", "verify"],
+            expect.any(Object),
+        );
+        expect(console.warn).not.toHaveBeenCalled();
+    });
+
+    it("should show the corrected command with positionals before -- in the tip", async () => {
+        // Arrange
+        vi.doMock("../x-impl", () => ({
+            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
+        }));
+        vi.doMock("yargs", () =>
+            buildYargsMock({
+                "script-name": "e2e",
+                _: ["setup", "--flag", "value"],
+                "dry-run": false,
+            }),
+        );
+        process.argv = [
+            "node",
+            "x.mjs",
+            "e2e",
+            "setup",
+            "--flag",
+            "value",
+        ];
+
+        // Act
+        await import("../bin/x");
+        await flushPromises();
+
+        // Assert
+        expect(console.warn).toHaveBeenCalledWith(
+            "  x e2e -- setup --flag value",
+        );
+    });
 });

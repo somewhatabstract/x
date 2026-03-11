@@ -431,14 +431,7 @@ describe("bin/x", () => {
                 "dry-run": false,
             }),
         );
-        process.argv = [
-            "node",
-            "x.mjs",
-            "e2e",
-            "setup",
-            "--flag",
-            "value",
-        ];
+        process.argv = ["node", "x.mjs", "e2e", "setup", "--flag", "value"];
 
         // Act
         await import("../bin/x");

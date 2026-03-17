@@ -3,24 +3,19 @@ import yargs from "yargs";
 import {hideBin} from "yargs/helpers";
 import {xImpl} from "../x-impl";
 
-const argv = yargs(hideBin(process.argv))
+const rawArgs = hideBin(process.argv);
+
+const argv = yargs(rawArgs)
     .usage("Usage: $0 <script-name> [...args]")
     .command(
-        "$0 <script-name> [args..]",
+        "$0 <script-name>",
         "Execute a bin script from any package in the workspace",
         (yargs) => {
-            return yargs
-                .positional("script-name", {
-                    describe: "Name of the bin script to execute",
-                    type: "string",
-                    demandOption: true,
-                })
-                .positional("args", {
-                    describe: "Arguments to pass to the script",
-                    type: "string",
-                    array: true,
-                    default: [],
-                });
+            return yargs.positional("script-name", {
+                describe: "Name of the bin script to execute",
+                type: "string",
+                demandOption: true,
+            });
         },
     )
     .option("dry-run", {
@@ -36,7 +31,7 @@ const argv = yargs(hideBin(process.argv))
     .example("$0 tsc --noEmit", "Run TypeScript compiler from any package")
     .example("$0 eslint src/", "Run ESLint from any package that provides it")
     .example("$0 --dry-run jest", "Preview which jest would be executed")
-    .strict()
+    .parserConfiguration({"unknown-options-as-args": true})
     .parseSync();
 
 // Extract script name and args
@@ -45,6 +40,20 @@ const args = (argv._ as string[]) || [];
 const options = {
     dryRun: argv["dry-run"] as boolean,
 };
+
+// If any args look like flags and -- was not used, warn the user and suggest
+// using -- to explicitly separate flag arguments from x's own options.
+if (!rawArgs.includes("--")) {
+    const flagLikeArgs = args.filter(
+        (arg) => typeof arg === "string" && arg.startsWith("-"),
+    );
+    if (flagLikeArgs.length > 0) {
+        console.warn(
+            `Tip: To pass flags to "${scriptName}", use '--' to separate them:`,
+        );
+        console.warn(`  x ${scriptName} -- ${args.join(" ")}`);
+    }
+}
 
 // Run the implementation and exit with the appropriate code
 xImpl(scriptName, args, options)

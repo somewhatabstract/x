@@ -40,7 +40,7 @@
         "yarn": "please-use-pnpm"
     },
     "devDependencies": {
-        "@biomejs/biome": "^2.4.3",
+        "@biomejs/biome": "^2.4.6",
         "@changesets/cli": "^2.29.8",
         "@codecov/rollup-plugin": "^1.9.1",
         "@types/node": "^20.19.29",

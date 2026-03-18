@@ -1,3 +1,4 @@
+import path from "node:path";
 import {beforeEach, describe, expect, it, vi} from "vitest";
 import type {PackageInfo} from "../discover-packages";
 import {findMatchingBins} from "../find-matching-bins";
@@ -8,6 +9,10 @@ vi.mock("node:fs/promises", () => ({
 }));
 
 import * as fs from "node:fs/promises";
+
+function normalizePathForComparison(filePath: string): string {
+    return filePath.replaceAll(path.sep, "/");
+}
 
 describe("findMatchingBins", () => {
     beforeEach(() => {
@@ -118,7 +123,9 @@ describe("findMatchingBins", () => {
         const matches = await findMatchingBins(packages, "x");
 
         // Assert
-        expect(matches[0].binPath).toBe("/test/path/dist/x.mjs");
+        expect(normalizePathForComparison(matches[0].binPath)).toBe(
+            "/test/path/dist/x.mjs",
+        );
     });
 
     it("should return empty array when no bins match", async () => {

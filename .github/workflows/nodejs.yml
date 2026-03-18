@@ -55,14 +55,14 @@ jobs:
         with:
           exclude: .github/,.storybook/
 
-  coverage:
-    name: Update test coverage
+  test:
+    name: Test on ${{ matrix.os }}
     env:
       CI: true
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         node-version: [20.x]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -84,15 +84,22 @@ jobs:
         shell: bash
         run: pnpm install --frozen-lockfile
 
+      - name: Run tests
+        if: ${{ matrix.os != 'ubuntu-latest' }}
+        run: pnpm test --run
+
       - name: Run tests with coverage
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         run: pnpm coverage
+
       - name: Upload coverage
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   build:
-    needs: [coverage, lint]
+    needs: [lint, test]
     name: Build
     env:
       CI: true

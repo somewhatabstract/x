@@ -1,3 +1,4 @@
+import path from "node:path";
 import * as manypkg from "@manypkg/get-packages";
 import {beforeEach, describe, expect, it, vi} from "vitest";
 import {discoverPackages} from "../discover-packages";
@@ -7,6 +8,10 @@ import {HandledError} from "../errors";
 vi.mock("@manypkg/get-packages", () => ({
     getPackages: vi.fn(),
 }));
+
+function normalizePathForComparison(filePath: string): string {
+    return filePath.replaceAll(path.sep, "/");
+}
 
 describe("discoverPackages", () => {
     beforeEach(() => {
@@ -77,7 +82,9 @@ describe("discoverPackages", () => {
         const result = await discoverPackages(workspaceRoot);
 
         // Assert
-        expect(result[0].path).toBe("/test/workspace/packages/test");
+        expect(normalizePathForComparison(result[0].path)).toBe(
+            "/test/workspace/packages/test",
+        );
     });
 
     it("should map package versions correctly", async () => {

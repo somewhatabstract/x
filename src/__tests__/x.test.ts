@@ -442,4 +442,212 @@ describe("bin/x", () => {
             "  x e2e -- setup --flag value",
         );
     });
+
+    it("should call listImpl with names-only mode when --list is provided without a value", async () => {
+        // Arrange
+        const listImplMock = vi.fn().mockResolvedValue({exitCode: 0});
+        vi.doMock("../list-impl", () => ({listImpl: listImplMock}));
+        vi.doMock("../x-impl", () => ({
+            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
+        }));
+        vi.doMock("yargs", () =>
+            buildYargsMock({
+                list: "",
+                json: false,
+                _: [],
+                "dry-run": false,
+            }),
+        );
+
+        // Act
+        await import("../bin/x");
+        await flushPromises();
+
+        // Assert
+        expect(listImplMock).toHaveBeenCalledWith({
+            mode: "names-only",
+            json: false,
+        });
+    });
+
+    it("should call listImpl with names-only mode when --list=names-only is provided", async () => {
+        // Arrange
+        const listImplMock = vi.fn().mockResolvedValue({exitCode: 0});
+        vi.doMock("../list-impl", () => ({listImpl: listImplMock}));
+        vi.doMock("../x-impl", () => ({
+            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
+        }));
+        vi.doMock("yargs", () =>
+            buildYargsMock({
+                list: "names-only",
+                json: false,
+                _: [],
+                "dry-run": false,
+            }),
+        );
+
+        // Act
+        await import("../bin/x");
+        await flushPromises();
+
+        // Assert
+        expect(listImplMock).toHaveBeenCalledWith({
+            mode: "names-only",
+            json: false,
+        });
+    });
+
+    it("should call listImpl with full mode when --list=full is provided", async () => {
+        // Arrange
+        const listImplMock = vi.fn().mockResolvedValue({exitCode: 0});
+        vi.doMock("../list-impl", () => ({listImpl: listImplMock}));
+        vi.doMock("../x-impl", () => ({
+            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
+        }));
+        vi.doMock("yargs", () =>
+            buildYargsMock({
+                list: "full",
+                json: false,
+                _: [],
+                "dry-run": false,
+            }),
+        );
+
+        // Act
+        await import("../bin/x");
+        await flushPromises();
+
+        // Assert
+        expect(listImplMock).toHaveBeenCalledWith({
+            mode: "full",
+            json: false,
+        });
+    });
+
+    it("should call listImpl with json true when --list --json is provided", async () => {
+        // Arrange
+        const listImplMock = vi.fn().mockResolvedValue({exitCode: 0});
+        vi.doMock("../list-impl", () => ({listImpl: listImplMock}));
+        vi.doMock("../x-impl", () => ({
+            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
+        }));
+        vi.doMock("yargs", () =>
+            buildYargsMock({
+                list: "",
+                json: true,
+                _: [],
+                "dry-run": false,
+            }),
+        );
+
+        // Act
+        await import("../bin/x");
+        await flushPromises();
+
+        // Assert
+        expect(listImplMock).toHaveBeenCalledWith({
+            mode: "names-only",
+            json: true,
+        });
+    });
+
+    it("should not call xImpl when --list is provided", async () => {
+        // Arrange
+        const xImplMock = vi.fn().mockResolvedValue({exitCode: 0});
+        vi.doMock("../list-impl", () => ({
+            listImpl: vi.fn().mockResolvedValue({exitCode: 0}),
+        }));
+        vi.doMock("../x-impl", () => ({xImpl: xImplMock}));
+        vi.doMock("yargs", () =>
+            buildYargsMock({
+                list: "",
+                json: false,
+                _: [],
+                "dry-run": false,
+            }),
+        );
+
+        // Act
+        await import("../bin/x");
+        await flushPromises();
+
+        // Assert
+        expect(xImplMock).not.toHaveBeenCalled();
+    });
+
+    it("should exit with listImpl exit code when --list is provided", async () => {
+        // Arrange
+        vi.doMock("../list-impl", () => ({
+            listImpl: vi.fn().mockResolvedValue({exitCode: 0}),
+        }));
+        vi.doMock("../x-impl", () => ({
+            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
+        }));
+        vi.doMock("yargs", () =>
+            buildYargsMock({
+                list: "",
+                json: false,
+                _: [],
+                "dry-run": false,
+            }),
+        );
+
+        // Act
+        await import("../bin/x");
+        await flushPromises();
+
+        // Assert
+        expect(processExitSpy).toHaveBeenCalledWith(0);
+    });
+
+    it("should exit with 1 when listImpl throws an unexpected error", async () => {
+        // Arrange
+        vi.doMock("../list-impl", () => ({
+            listImpl: vi.fn().mockRejectedValue(new Error("Unexpected")),
+        }));
+        vi.doMock("../x-impl", () => ({
+            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
+        }));
+        vi.doMock("yargs", () =>
+            buildYargsMock({
+                list: "",
+                json: false,
+                _: [],
+                "dry-run": false,
+            }),
+        );
+
+        // Act
+        await import("../bin/x");
+        await flushPromises();
+
+        // Assert
+        expect(processExitSpy).toHaveBeenCalledWith(1);
+    });
+
+    it("should exit with 1 and error when no script-name and no --list", async () => {
+        // Arrange
+        vi.doMock("../x-impl", () => ({
+            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
+        }));
+        vi.doMock("yargs", () =>
+            buildYargsMock({
+                "script-name": undefined,
+                list: undefined,
+                json: false,
+                _: [],
+                "dry-run": false,
+            }),
+        );
+
+        // Act
+        await import("../bin/x");
+        await flushPromises();
+
+        // Assert
+        expect(processExitSpy).toHaveBeenCalledWith(1);
+        expect(console.error).toHaveBeenCalledWith(
+            expect.stringContaining("script-name is required"),
+        );
+    });
 });

@@ -2,6 +2,8 @@ import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
 
 // Build a mock yargs chain that returns the given parsed args from parseSync
 const buildYargsMock = (parsedArgs: Record<string, unknown>) => {
+    let checkFn: ((argv: Record<string, unknown>) => true) | undefined;
+
     const yargsChain: Record<string, unknown> = {
         usage: vi.fn().mockReturnThis(),
         option: vi.fn().mockReturnThis(),
@@ -10,9 +12,28 @@ const buildYargsMock = (parsedArgs: Record<string, unknown>) => {
         version: vi.fn().mockReturnThis(),
         example: vi.fn().mockReturnThis(),
         parserConfiguration: vi.fn().mockReturnThis(),
-        parseSync: vi.fn().mockReturnValue(parsedArgs),
         // Needed when the command builder callback calls yargs.positional()
         positional: vi.fn().mockReturnThis(),
+        check: vi.fn().mockImplementation((fn: unknown) => {
+            if (typeof fn === "function") {
+                checkFn = fn as (argv: Record<string, unknown>) => true;
+            }
+            return yargsChain;
+        }),
+        parseSync: vi.fn().mockImplementation(() => {
+            if (checkFn) {
+                try {
+                    checkFn(parsedArgs);
+                } catch (e) {
+                    // Simulate yargs validation error: print message and exit
+                    console.error((e as Error).message);
+                    process.exit(1);
+                    // Re-throw to prevent further execution when process.exit is mocked
+                    throw e;
+                }
+            }
+            return parsedArgs;
+        }),
     };
     // Invoke the builder callback so its body is exercised
     yargsChain.command = vi
@@ -195,28 +216,7 @@ describe("bin/x", () => {
         expect(console.warn).not.toHaveBeenCalled();
     });
 
-    it("should exit with 1 when xImpl throws an unexpected error", async () => {
-        // Arrange
-        vi.doMock("../x-impl", () => ({
-            xImpl: vi.fn().mockRejectedValue(new Error("Unexpected")),
-        }));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                "script-name": "my-script",
-                _: [],
-                "dry-run": false,
-            }),
-        );
-
-        // Act
-        const {main} = await import("../bin/x");
-        await main();
-
-        // Assert
-        expect(processExitSpy).toHaveBeenCalledWith(1);
-    });
-
-    it("should log error details when xImpl throws an unexpected error", async () => {
+    it("should propagate unexpected errors thrown by xImpl", async () => {
         // Arrange
         const unexpectedError = new Error("Something went wrong");
         vi.doMock("../x-impl", () => ({
@@ -232,13 +232,9 @@ describe("bin/x", () => {
 
         // Act
         const {main} = await import("../bin/x");
-        await main();
 
         // Assert
-        expect(console.error).toHaveBeenCalledWith(
-            "Unexpected error:",
-            unexpectedError,
-        );
+        await expect(main()).rejects.toThrow(unexpectedError);
     });
 
     it("should pass unknown flag args to xImpl when user omits --", async () => {
@@ -596,10 +592,11 @@ describe("bin/x", () => {
         expect(processExitSpy).toHaveBeenCalledWith(0);
     });
 
-    it("should exit with 1 when listing encounters an unexpected error", async () => {
+    it("should propagate unexpected errors thrown during listing", async () => {
         // Arrange
+        const unexpectedError = new Error("Unexpected");
         vi.doMock("../list-impl", () => ({
-            listImpl: vi.fn().mockRejectedValue(new Error("Unexpected")),
+            listImpl: vi.fn().mockRejectedValue(unexpectedError),
         }));
         vi.doMock("../x-impl", () => ({
             xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
@@ -615,10 +612,9 @@ describe("bin/x", () => {
 
         // Act
         const {main} = await import("../bin/x");
-        await main();
 
         // Assert
-        expect(processExitSpy).toHaveBeenCalledWith(1);
+        await expect(main()).rejects.toThrow(unexpectedError);
     });
 
     it("should exit with 1 when no script name is provided", async () => {
@@ -638,7 +634,11 @@ describe("bin/x", () => {
 
         // Act
         const {main} = await import("../bin/x");
-        await main();
+        try {
+            await main();
+        } catch {
+            // expected — validation error thrown by the yargs check mock
+        }
 
         // Assert
         expect(processExitSpy).toHaveBeenCalledWith(1);
@@ -661,7 +661,11 @@ describe("bin/x", () => {
 
         // Act
         const {main} = await import("../bin/x");
-        await main();
+        try {
+            await main();
+        } catch {
+            // expected — validation error thrown by the yargs check mock
+        }
 
         // Assert
         expect(console.error).toHaveBeenCalledWith(

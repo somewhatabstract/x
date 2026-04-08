@@ -38,6 +38,17 @@ export async function main(): Promise<void> {
             type: "boolean",
             default: false,
         })
+        .check((argv) => {
+            if (
+                argv.list === undefined &&
+                !(argv["script-name"] as string | undefined)?.trim()
+            ) {
+                throw new Error(
+                    "script-name is required. Use --list to see available commands.",
+                );
+            }
+            return true;
+        })
         .help()
         .alias("help", "h")
         .version()
@@ -56,53 +67,47 @@ export async function main(): Promise<void> {
 
     // Check if we are in list mode
     const listArg = argv.list;
-    try {
-        if (listArg !== undefined) {
-            const mode = listArg === "full" ? "full" : "names-only";
-            const json = !!argv.json;
-            const result = await listImpl({mode, json});
-            process.exit(result.exitCode);
-        } else {
-            // Extract script name and args
-            const scriptName = argv["script-name"] as string;
-
-            if (!scriptName?.trim()) {
-                console.error(
-                    "Error: script-name is required. Use --list to see available commands.",
-                );
-                process.exit(1);
-                return;
-            }
-
-            const args = (argv._ as string[]) || [];
-            const options = {
-                dryRun: argv["dry-run"] as boolean,
-            };
-
-            // If any args look like flags and -- was not used, warn the user and suggest
-            // using -- to explicitly separate flag arguments from x's own options.
-            if (!rawArgs.includes("--")) {
-                const flagLikeArgs = args.filter(
-                    (arg) => typeof arg === "string" && arg.startsWith("-"),
-                );
-                if (flagLikeArgs.length > 0) {
-                    console.warn(
-                        `Tip: To pass flags to "${scriptName}", use '--' to separate them:`,
-                    );
-                    console.warn(`  x ${scriptName} -- ${args.join(" ")}`);
-                }
-            }
-
-            const result = await xImpl(scriptName, args, options);
-            process.exit(result.exitCode);
-        }
-    } catch (error) {
-        console.error("Unexpected error:", error);
-        process.exit(1);
+    if (listArg !== undefined) {
+        const mode = listArg === "full" ? "full" : "names-only";
+        const json = !!argv.json;
+        const result = await listImpl({mode, json});
+        process.exit(result.exitCode);
+        return;
     }
+
+    // Extract script name and args
+    const scriptName = argv["script-name"] as string;
+
+    const args = (argv._ as string[]) || [];
+    const options = {
+        dryRun: argv["dry-run"] as boolean,
+    };
+
+    // If any args look like flags and -- was not used, warn the user and suggest
+    // using -- to explicitly separate flag arguments from x's own options.
+    if (!rawArgs.includes("--")) {
+        const flagLikeArgs = args.filter(
+            (arg) => typeof arg === "string" && arg.startsWith("-"),
+        );
+        if (flagLikeArgs.length > 0) {
+            console.warn(
+                `Tip: To pass flags to "${scriptName}", use '--' to separate them:`,
+            );
+            console.warn(`  x ${scriptName} -- ${args.join(" ")}`);
+        }
+    }
+
+    const result = await xImpl(scriptName, args, options);
+    process.exit(result.exitCode);
+    return;
 }
 
 // Only execute when this file is the entry point, not when imported.
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-    main();
+    try {
+        await main();
+    } catch (error) {
+        console.error("Unexpected error:", error);
+        process.exit(1);
+    }
 }

@@ -443,7 +443,7 @@ describe("bin/x", () => {
         );
     });
 
-    it("should call listImpl with names-only mode when --list is provided without a value", async () => {
+    it("should use names-only mode when --list is used without a value", async () => {
         // Arrange
         const listImplMock = vi.fn().mockResolvedValue({exitCode: 0});
         vi.doMock("../list-impl", () => ({listImpl: listImplMock}));
@@ -470,7 +470,7 @@ describe("bin/x", () => {
         });
     });
 
-    it("should call listImpl with names-only mode when --list=names-only is provided", async () => {
+    it("should use names-only mode when --list=names-only is specified", async () => {
         // Arrange
         const listImplMock = vi.fn().mockResolvedValue({exitCode: 0});
         vi.doMock("../list-impl", () => ({listImpl: listImplMock}));
@@ -497,7 +497,7 @@ describe("bin/x", () => {
         });
     });
 
-    it("should call listImpl with full mode when --list=full is provided", async () => {
+    it("should use full mode when --list=full is specified", async () => {
         // Arrange
         const listImplMock = vi.fn().mockResolvedValue({exitCode: 0});
         vi.doMock("../list-impl", () => ({listImpl: listImplMock}));
@@ -524,7 +524,7 @@ describe("bin/x", () => {
         });
     });
 
-    it("should call listImpl with json true when --list --json is provided", async () => {
+    it("should use JSON output format when --list and --json are used", async () => {
         // Arrange
         const listImplMock = vi.fn().mockResolvedValue({exitCode: 0});
         vi.doMock("../list-impl", () => ({listImpl: listImplMock}));
@@ -551,7 +551,7 @@ describe("bin/x", () => {
         });
     });
 
-    it("should not call xImpl when --list is provided", async () => {
+    it("should not execute a script when --list is provided", async () => {
         // Arrange
         const xImplMock = vi.fn().mockResolvedValue({exitCode: 0});
         vi.doMock("../list-impl", () => ({
@@ -575,7 +575,7 @@ describe("bin/x", () => {
         expect(xImplMock).not.toHaveBeenCalled();
     });
 
-    it("should exit with listImpl exit code when --list is provided", async () => {
+    it("should exit with the listing result exit code when --list is provided", async () => {
         // Arrange
         vi.doMock("../list-impl", () => ({
             listImpl: vi.fn().mockResolvedValue({exitCode: 0}),
@@ -600,7 +600,7 @@ describe("bin/x", () => {
         expect(processExitSpy).toHaveBeenCalledWith(0);
     });
 
-    it("should exit with 1 when listImpl throws an unexpected error", async () => {
+    it("should exit with 1 when listing encounters an unexpected error", async () => {
         // Arrange
         vi.doMock("../list-impl", () => ({
             listImpl: vi.fn().mockRejectedValue(new Error("Unexpected")),
@@ -625,7 +625,7 @@ describe("bin/x", () => {
         expect(processExitSpy).toHaveBeenCalledWith(1);
     });
 
-    it("should exit with 1 and error when no script-name and no --list", async () => {
+    it("should exit with 1 when no script name is provided", async () => {
         // Arrange
         vi.doMock("../x-impl", () => ({
             xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
@@ -646,6 +646,28 @@ describe("bin/x", () => {
 
         // Assert
         expect(processExitSpy).toHaveBeenCalledWith(1);
+    });
+
+    it("should report an error when no script name is provided", async () => {
+        // Arrange
+        vi.doMock("../x-impl", () => ({
+            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
+        }));
+        vi.doMock("yargs", () =>
+            buildYargsMock({
+                "script-name": undefined,
+                list: undefined,
+                json: false,
+                _: [],
+                "dry-run": false,
+            }),
+        );
+
+        // Act
+        await import("../bin/x");
+        await flushPromises();
+
+        // Assert
         expect(console.error).toHaveBeenCalledWith(
             expect.stringContaining("script-name is required"),
         );

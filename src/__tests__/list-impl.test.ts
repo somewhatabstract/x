@@ -44,16 +44,24 @@ describe("listImpl", () => {
     });
 
     describe("names-only mode (text)", () => {
-        it("should print each script name on its own line sorted lexicographically", async () => {
+        it("should print all script names sorted lexicographically", async () => {
+            // Arrange
+            // (default beforeEach setup is sufficient)
+
+            // Act
             await listImpl({mode: "names-only", json: false});
 
-            expect(console.log).toHaveBeenCalledWith("a-script");
-            expect(console.log).toHaveBeenCalledWith("c-script");
-            expect(console.log).toHaveBeenCalledWith("d-script");
-            expect(console.log).toHaveBeenCalledWith("e-script");
+            // Assert
+            expect(vi.mocked(console.log).mock.calls).toEqual([
+                ["a-script"],
+                ["c-script"],
+                ["d-script"],
+                ["e-script"],
+            ]);
         });
 
-        it("should deduplicate script names that appear in multiple packages", async () => {
+        it("should print each script name only once when it appears in multiple packages", async () => {
+            // Arrange
             vi.mocked(listBinsModule.listAllBins).mockResolvedValue([
                 {
                     packageName: "@scope/pkg-a",
@@ -67,23 +75,39 @@ describe("listImpl", () => {
                 },
             ]);
 
+            // Act
             await listImpl({mode: "names-only", json: false});
 
-            const calls = vi.mocked(console.log).mock.calls.map((c) => c[0]);
-            const sharedCalls = calls.filter((c) => c === "shared-tool");
-            expect(sharedCalls).toHaveLength(1);
+            // Assert
+            const printedNames = vi
+                .mocked(console.log)
+                .mock.calls.map((c) => c[0]);
+            expect(
+                printedNames.filter((name) => name === "shared-tool"),
+            ).toHaveLength(1);
         });
 
         it("should return exit code 0", async () => {
+            // Arrange
+            // (default beforeEach setup is sufficient)
+
+            // Act
             const result = await listImpl({mode: "names-only", json: false});
+
+            // Assert
             expect(result.exitCode).toBe(0);
         });
     });
 
     describe("names-only mode (JSON)", () => {
         it("should print a single-line JSON array of sorted unique script names", async () => {
+            // Arrange
+            // (default beforeEach setup is sufficient)
+
+            // Act
             await listImpl({mode: "names-only", json: true});
 
+            // Assert
             expect(console.log).toHaveBeenCalledWith(
                 JSON.stringify([
                     "a-script",
@@ -95,28 +119,40 @@ describe("listImpl", () => {
         });
 
         it("should return exit code 0", async () => {
+            // Arrange
+            // (default beforeEach setup is sufficient)
+
+            // Act
             const result = await listImpl({mode: "names-only", json: true});
+
+            // Assert
             expect(result.exitCode).toBe(0);
         });
     });
 
     describe("full mode (text)", () => {
-        it("should print package header and indented script names", async () => {
+        it("should output each package header and its scripts", async () => {
+            // Arrange
+            // (default beforeEach setup is sufficient)
+
+            // Act
             await listImpl({mode: "full", json: false});
 
-            expect(console.log).toHaveBeenCalledWith(
-                "@scope/pkg-a (./packages/pkg-a)",
-            );
-            expect(console.log).toHaveBeenCalledWith("   a-script");
-            expect(console.log).toHaveBeenCalledWith("   d-script");
-            expect(console.log).toHaveBeenCalledWith(
-                "@scope/pkg-b (./packages/pkg-b)",
-            );
-            expect(console.log).toHaveBeenCalledWith("   c-script");
-            expect(console.log).toHaveBeenCalledWith("   e-script");
+            // Assert
+            expect(vi.mocked(console.log).mock.calls).toEqual([
+                ["@scope/pkg-a (./packages/pkg-a)"],
+                ["   a-script"],
+                ["   d-script"],
+                [],
+                ["@scope/pkg-b (./packages/pkg-b)"],
+                ["   c-script"],
+                ["   e-script"],
+                [],
+            ]);
         });
 
         it("should sort packages lexicographically", async () => {
+            // Arrange
             vi.mocked(listBinsModule.listAllBins).mockResolvedValue([
                 {
                     packageName: "@scope/z-pkg",
@@ -130,26 +166,41 @@ describe("listImpl", () => {
                 },
             ]);
 
+            // Act
             await listImpl({mode: "full", json: false});
 
-            const calls = vi
+            // Assert
+            const headerCalls = vi
                 .mocked(console.log)
-                .mock.calls.map((c) => c[0] as string);
-            const headerCalls = calls.filter((c) => c?.startsWith("@scope/"));
-            expect(headerCalls[0]).toContain("a-pkg");
-            expect(headerCalls[1]).toContain("z-pkg");
+                .mock.calls.map((c) => c[0] as string)
+                .filter((c) => c?.startsWith("@scope/"));
+            expect(headerCalls).toEqual([
+                expect.stringContaining("a-pkg"),
+                expect.stringContaining("z-pkg"),
+            ]);
         });
 
         it("should return exit code 0", async () => {
+            // Arrange
+            // (default beforeEach setup is sufficient)
+
+            // Act
             const result = await listImpl({mode: "full", json: false});
+
+            // Assert
             expect(result.exitCode).toBe(0);
         });
     });
 
     describe("full mode (JSON)", () => {
         it("should print a single-line JSON object grouped by package name", async () => {
+            // Arrange
+            // (default beforeEach setup is sufficient)
+
+            // Act
             await listImpl({mode: "full", json: true});
 
+            // Assert
             expect(console.log).toHaveBeenCalledWith(
                 JSON.stringify({
                     "@scope/pkg-a": {
@@ -165,34 +216,58 @@ describe("listImpl", () => {
         });
 
         it("should return exit code 0", async () => {
+            // Arrange
+            // (default beforeEach setup is sufficient)
+
+            // Act
             const result = await listImpl({mode: "full", json: true});
+
+            // Assert
             expect(result.exitCode).toBe(0);
         });
     });
 
     describe("error handling", () => {
-        it("should return exit code 1 when no packages are found", async () => {
+        it("should return exit code 1 when no packages are found in the workspace", async () => {
+            // Arrange
             vi.mocked(
                 discoverPackagesModule.discoverPackages,
             ).mockResolvedValue([]);
 
+            // Act
             const result = await listImpl({mode: "names-only", json: false});
 
+            // Assert
             expect(result.exitCode).toBe(1);
+        });
+
+        it("should report an error when no packages are found in the workspace", async () => {
+            // Arrange
+            vi.mocked(
+                discoverPackagesModule.discoverPackages,
+            ).mockResolvedValue([]);
+
+            // Act
+            await listImpl({mode: "names-only", json: false});
+
+            // Assert
             expect(console.error).toHaveBeenCalledWith(
                 expect.stringContaining("No packages found"),
             );
         });
 
-        it("should rethrow non-HandledError errors", async () => {
+        it("should propagate unexpected errors", async () => {
+            // Arrange
             const unexpectedError = new Error("Unexpected failure");
             vi.mocked(
                 findWorkspaceRootModule.findWorkspaceRoot,
             ).mockRejectedValue(unexpectedError);
 
-            await expect(
-                listImpl({mode: "names-only", json: false}),
-            ).rejects.toThrow("Unexpected failure");
+            // Act
+            const underTest = () => listImpl({mode: "names-only", json: false});
+
+            // Assert
+            await expect(underTest).rejects.toThrow("Unexpected failure");
         });
     });
 });

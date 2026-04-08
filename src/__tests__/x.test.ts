@@ -1,7 +1,16 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
 
-// Build a mock yargs chain that returns the given parsed args from parseSync
-const buildYargsMock = (parsedArgs: Record<string, unknown>) => {
+// Shared mutable state for the yargs mock - set per test before calling main()
+const state = vi.hoisted(() => ({
+    parsedArgs: {} as Record<string, unknown>,
+}));
+
+// vi.mock() calls are hoisted before static imports, so these mocks are in
+// place when main() is imported below.
+vi.mock("../x-impl", () => ({xImpl: vi.fn()}));
+vi.mock("../list-impl", () => ({listImpl: vi.fn()}));
+vi.mock("yargs", () => {
+    // yargsCheckFn is registered when main() calls .check(fn) on the chain
     let yargsCheckFn: ((argv: Record<string, unknown>) => true) | undefined;
 
     const yargsChain: Record<string, unknown> = {
@@ -23,7 +32,7 @@ const buildYargsMock = (parsedArgs: Record<string, unknown>) => {
         parseSync: vi.fn().mockImplementation(() => {
             if (yargsCheckFn) {
                 try {
-                    yargsCheckFn(parsedArgs);
+                    yargsCheckFn(state.parsedArgs);
                 } catch (e) {
                     // Simulate yargs validation error: print message and exit
                     console.error((e as Error).message);
@@ -34,7 +43,7 @@ const buildYargsMock = (parsedArgs: Record<string, unknown>) => {
                     throw e;
                 }
             }
-            return parsedArgs;
+            return state.parsedArgs;
         }),
     };
     // Invoke the builder callback so its body is exercised
@@ -49,20 +58,27 @@ const buildYargsMock = (parsedArgs: Record<string, unknown>) => {
             },
         );
     return {default: vi.fn().mockReturnValue(yargsChain)};
-};
+});
+
+import {main} from "../bin/x";
+import {listImpl} from "../list-impl";
+import {xImpl} from "../x-impl";
 
 describe("bin/x", () => {
     let processExitSpy: ReturnType<typeof vi.spyOn>;
     let originalArgv: string[];
 
     beforeEach(() => {
-        vi.resetModules();
+        vi.clearAllMocks();
         originalArgv = process.argv;
         processExitSpy = vi
             .spyOn(process, "exit")
             .mockImplementation(() => undefined as never);
         vi.spyOn(console, "error").mockImplementation(() => {});
         vi.spyOn(console, "warn").mockImplementation(() => {});
+        // Default implementations — individual tests override as needed
+        vi.mocked(xImpl).mockResolvedValue({exitCode: 0});
+        vi.mocked(listImpl).mockResolvedValue({exitCode: 0});
     });
 
     afterEach(() => {
@@ -72,22 +88,17 @@ describe("bin/x", () => {
 
     it("should call xImpl with the script name from argv", async () => {
         // Arrange
-        const xImplMock = vi.fn().mockResolvedValue({exitCode: 0});
-        vi.doMock("../x-impl", () => ({xImpl: xImplMock}));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                "script-name": "my-script",
-                _: [],
-                "dry-run": false,
-            }),
-        );
+        state.parsedArgs = {
+            "script-name": "my-script",
+            _: [],
+            "dry-run": false,
+        };
 
         // Act
-        const {main} = await import("../bin/x");
         await main();
 
         // Assert
-        expect(xImplMock).toHaveBeenCalledWith(
+        expect(vi.mocked(xImpl)).toHaveBeenCalledWith(
             "my-script",
             expect.any(Array),
             expect.any(Object),
@@ -97,23 +108,18 @@ describe("bin/x", () => {
 
     it("should call xImpl with args from argv underscore field", async () => {
         // Arrange
-        const xImplMock = vi.fn().mockResolvedValue({exitCode: 0});
-        vi.doMock("../x-impl", () => ({xImpl: xImplMock}));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                "script-name": "my-script",
-                _: ["--flag", "value"],
-                "dry-run": false,
-            }),
-        );
+        state.parsedArgs = {
+            "script-name": "my-script",
+            _: ["--flag", "value"],
+            "dry-run": false,
+        };
         process.argv = ["node", "x.mjs", "my-script", "--", "--flag", "value"];
 
         // Act
-        const {main} = await import("../bin/x");
         await main();
 
         // Assert
-        expect(xImplMock).toHaveBeenCalledWith(
+        expect(vi.mocked(xImpl)).toHaveBeenCalledWith(
             expect.any(String),
             ["--flag", "value"],
             expect.any(Object),
@@ -123,22 +129,17 @@ describe("bin/x", () => {
 
     it("should call xImpl with dryRun true when dry-run argv is true", async () => {
         // Arrange
-        const xImplMock = vi.fn().mockResolvedValue({exitCode: 0});
-        vi.doMock("../x-impl", () => ({xImpl: xImplMock}));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                "script-name": "my-script",
-                _: [],
-                "dry-run": true,
-            }),
-        );
+        state.parsedArgs = {
+            "script-name": "my-script",
+            _: [],
+            "dry-run": true,
+        };
 
         // Act
-        const {main} = await import("../bin/x");
         await main();
 
         // Assert
-        expect(xImplMock).toHaveBeenCalledWith(
+        expect(vi.mocked(xImpl)).toHaveBeenCalledWith(
             expect.any(String),
             expect.any(Array),
             {dryRun: true},
@@ -148,22 +149,17 @@ describe("bin/x", () => {
 
     it("should call xImpl with dryRun false when dry-run argv is false", async () => {
         // Arrange
-        const xImplMock = vi.fn().mockResolvedValue({exitCode: 0});
-        vi.doMock("../x-impl", () => ({xImpl: xImplMock}));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                "script-name": "my-script",
-                _: [],
-                "dry-run": false,
-            }),
-        );
+        state.parsedArgs = {
+            "script-name": "my-script",
+            _: [],
+            "dry-run": false,
+        };
 
         // Act
-        const {main} = await import("../bin/x");
         await main();
 
         // Assert
-        expect(xImplMock).toHaveBeenCalledWith(
+        expect(vi.mocked(xImpl)).toHaveBeenCalledWith(
             expect.any(String),
             expect.any(Array),
             {dryRun: false},
@@ -173,22 +169,17 @@ describe("bin/x", () => {
 
     it("should default to empty array when argv underscore field is falsy", async () => {
         // Arrange
-        const xImplMock = vi.fn().mockResolvedValue({exitCode: 0});
-        vi.doMock("../x-impl", () => ({xImpl: xImplMock}));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                "script-name": "my-script",
-                _: null,
-                "dry-run": false,
-            }),
-        );
+        state.parsedArgs = {
+            "script-name": "my-script",
+            _: null,
+            "dry-run": false,
+        };
 
         // Act
-        const {main} = await import("../bin/x");
         await main();
 
         // Assert
-        expect(xImplMock).toHaveBeenCalledWith(
+        expect(vi.mocked(xImpl)).toHaveBeenCalledWith(
             expect.any(String),
             [],
             expect.any(Object),
@@ -198,19 +189,14 @@ describe("bin/x", () => {
 
     it("should exit with the exit code returned by xImpl", async () => {
         // Arrange
-        vi.doMock("../x-impl", () => ({
-            xImpl: vi.fn().mockResolvedValue({exitCode: 42}),
-        }));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                "script-name": "my-script",
-                _: [],
-                "dry-run": false,
-            }),
-        );
+        vi.mocked(xImpl).mockResolvedValue({exitCode: 42});
+        state.parsedArgs = {
+            "script-name": "my-script",
+            _: [],
+            "dry-run": false,
+        };
 
         // Act
-        const {main} = await import("../bin/x");
         await main();
 
         // Assert
@@ -221,19 +207,12 @@ describe("bin/x", () => {
     it("should propagate unexpected errors thrown by xImpl", async () => {
         // Arrange
         const unexpectedError = new Error("Something went wrong");
-        vi.doMock("../x-impl", () => ({
-            xImpl: vi.fn().mockRejectedValue(unexpectedError),
-        }));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                "script-name": "my-script",
-                _: [],
-                "dry-run": false,
-            }),
-        );
-
-        // Act
-        const {main} = await import("../bin/x");
+        vi.mocked(xImpl).mockRejectedValue(unexpectedError);
+        state.parsedArgs = {
+            "script-name": "my-script",
+            _: [],
+            "dry-run": false,
+        };
 
         // Assert
         await expect(main()).rejects.toThrow(unexpectedError);
@@ -241,15 +220,11 @@ describe("bin/x", () => {
 
     it("should pass unknown flag args to xImpl when user omits --", async () => {
         // Arrange
-        const xImplMock = vi.fn().mockResolvedValue({exitCode: 0});
-        vi.doMock("../x-impl", () => ({xImpl: xImplMock}));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                "script-name": "my-script",
-                _: ["--unknown-flag", "value"],
-                "dry-run": false,
-            }),
-        );
+        state.parsedArgs = {
+            "script-name": "my-script",
+            _: ["--unknown-flag", "value"],
+            "dry-run": false,
+        };
         process.argv = [
             "node",
             "x.mjs",
@@ -259,11 +234,10 @@ describe("bin/x", () => {
         ];
 
         // Act
-        const {main} = await import("../bin/x");
         await main();
 
         // Assert
-        expect(xImplMock).toHaveBeenCalledWith(
+        expect(vi.mocked(xImpl)).toHaveBeenCalledWith(
             "my-script",
             ["--unknown-flag", "value"],
             expect.any(Object),
@@ -272,16 +246,11 @@ describe("bin/x", () => {
 
     it("should show a tip when args contain flags and -- was not used", async () => {
         // Arrange
-        vi.doMock("../x-impl", () => ({
-            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
-        }));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                "script-name": "my-script",
-                _: ["--unknown-flag", "value"],
-                "dry-run": false,
-            }),
-        );
+        state.parsedArgs = {
+            "script-name": "my-script",
+            _: ["--unknown-flag", "value"],
+            "dry-run": false,
+        };
         process.argv = [
             "node",
             "x.mjs",
@@ -291,7 +260,6 @@ describe("bin/x", () => {
         ];
 
         // Act
-        const {main} = await import("../bin/x");
         await main();
 
         // Assert
@@ -302,16 +270,11 @@ describe("bin/x", () => {
 
     it("should show the corrected command in the tip when args contain flags without --", async () => {
         // Arrange
-        vi.doMock("../x-impl", () => ({
-            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
-        }));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                "script-name": "my-script",
-                _: ["--unknown-flag", "value"],
-                "dry-run": false,
-            }),
-        );
+        state.parsedArgs = {
+            "script-name": "my-script",
+            _: ["--unknown-flag", "value"],
+            "dry-run": false,
+        };
         process.argv = [
             "node",
             "x.mjs",
@@ -321,7 +284,6 @@ describe("bin/x", () => {
         ];
 
         // Act
-        const {main} = await import("../bin/x");
         await main();
 
         // Assert
@@ -332,16 +294,11 @@ describe("bin/x", () => {
 
     it("should not show a tip when -- was used before flag args", async () => {
         // Arrange
-        vi.doMock("../x-impl", () => ({
-            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
-        }));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                "script-name": "my-script",
-                _: ["--unknown-flag", "value"],
-                "dry-run": false,
-            }),
-        );
+        state.parsedArgs = {
+            "script-name": "my-script",
+            _: ["--unknown-flag", "value"],
+            "dry-run": false,
+        };
         process.argv = [
             "node",
             "x.mjs",
@@ -352,7 +309,6 @@ describe("bin/x", () => {
         ];
 
         // Act
-        const {main} = await import("../bin/x");
         await main();
 
         // Assert
@@ -361,16 +317,11 @@ describe("bin/x", () => {
 
     it("should not show a tip when args contain no flag-like values", async () => {
         // Arrange
-        vi.doMock("../x-impl", () => ({
-            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
-        }));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                "script-name": "my-script",
-                _: ["positional-arg", "another-arg"],
-                "dry-run": false,
-            }),
-        );
+        state.parsedArgs = {
+            "script-name": "my-script",
+            _: ["positional-arg", "another-arg"],
+            "dry-run": false,
+        };
         process.argv = [
             "node",
             "x.mjs",
@@ -380,7 +331,6 @@ describe("bin/x", () => {
         ];
 
         // Act
-        const {main} = await import("../bin/x");
         await main();
 
         // Assert
@@ -389,23 +339,18 @@ describe("bin/x", () => {
 
     it("should pass positional args to xImpl when user omits --", async () => {
         // Arrange
-        const xImplMock = vi.fn().mockResolvedValue({exitCode: 0});
-        vi.doMock("../x-impl", () => ({xImpl: xImplMock}));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                "script-name": "e2e",
-                _: ["setup", "verify"],
-                "dry-run": false,
-            }),
-        );
+        state.parsedArgs = {
+            "script-name": "e2e",
+            _: ["setup", "verify"],
+            "dry-run": false,
+        };
         process.argv = ["node", "x.mjs", "e2e", "setup", "verify"];
 
         // Act
-        const {main} = await import("../bin/x");
         await main();
 
         // Assert
-        expect(xImplMock).toHaveBeenCalledWith(
+        expect(vi.mocked(xImpl)).toHaveBeenCalledWith(
             "e2e",
             ["setup", "verify"],
             expect.any(Object),
@@ -415,20 +360,14 @@ describe("bin/x", () => {
 
     it("should show the corrected command with positionals before -- in the tip", async () => {
         // Arrange
-        vi.doMock("../x-impl", () => ({
-            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
-        }));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                "script-name": "e2e",
-                _: ["setup", "--flag", "value"],
-                "dry-run": false,
-            }),
-        );
+        state.parsedArgs = {
+            "script-name": "e2e",
+            _: ["setup", "--flag", "value"],
+            "dry-run": false,
+        };
         process.argv = ["node", "x.mjs", "e2e", "setup", "--flag", "value"];
 
         // Act
-        const {main} = await import("../bin/x");
         await main();
 
         // Assert
@@ -439,26 +378,13 @@ describe("bin/x", () => {
 
     it("should use names-only mode when --list is used without a value", async () => {
         // Arrange
-        const listImplMock = vi.fn().mockResolvedValue({exitCode: 0});
-        vi.doMock("../list-impl", () => ({listImpl: listImplMock}));
-        vi.doMock("../x-impl", () => ({
-            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
-        }));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                list: "",
-                json: false,
-                _: [],
-                "dry-run": false,
-            }),
-        );
+        state.parsedArgs = {list: "", json: false, _: [], "dry-run": false};
 
         // Act
-        const {main} = await import("../bin/x");
         await main();
 
         // Assert
-        expect(listImplMock).toHaveBeenCalledWith({
+        expect(vi.mocked(listImpl)).toHaveBeenCalledWith({
             mode: "names-only",
             json: false,
         });
@@ -466,26 +392,18 @@ describe("bin/x", () => {
 
     it("should use names-only mode when --list=names-only is specified", async () => {
         // Arrange
-        const listImplMock = vi.fn().mockResolvedValue({exitCode: 0});
-        vi.doMock("../list-impl", () => ({listImpl: listImplMock}));
-        vi.doMock("../x-impl", () => ({
-            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
-        }));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                list: "names-only",
-                json: false,
-                _: [],
-                "dry-run": false,
-            }),
-        );
+        state.parsedArgs = {
+            list: "names-only",
+            json: false,
+            _: [],
+            "dry-run": false,
+        };
 
         // Act
-        const {main} = await import("../bin/x");
         await main();
 
         // Assert
-        expect(listImplMock).toHaveBeenCalledWith({
+        expect(vi.mocked(listImpl)).toHaveBeenCalledWith({
             mode: "names-only",
             json: false,
         });
@@ -493,26 +411,13 @@ describe("bin/x", () => {
 
     it("should use full mode when --list=full is specified", async () => {
         // Arrange
-        const listImplMock = vi.fn().mockResolvedValue({exitCode: 0});
-        vi.doMock("../list-impl", () => ({listImpl: listImplMock}));
-        vi.doMock("../x-impl", () => ({
-            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
-        }));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                list: "full",
-                json: false,
-                _: [],
-                "dry-run": false,
-            }),
-        );
+        state.parsedArgs = {list: "full", json: false, _: [], "dry-run": false};
 
         // Act
-        const {main} = await import("../bin/x");
         await main();
 
         // Assert
-        expect(listImplMock).toHaveBeenCalledWith({
+        expect(vi.mocked(listImpl)).toHaveBeenCalledWith({
             mode: "full",
             json: false,
         });
@@ -520,26 +425,13 @@ describe("bin/x", () => {
 
     it("should use JSON output format when --list and --json are used", async () => {
         // Arrange
-        const listImplMock = vi.fn().mockResolvedValue({exitCode: 0});
-        vi.doMock("../list-impl", () => ({listImpl: listImplMock}));
-        vi.doMock("../x-impl", () => ({
-            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
-        }));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                list: "",
-                json: true,
-                _: [],
-                "dry-run": false,
-            }),
-        );
+        state.parsedArgs = {list: "", json: true, _: [], "dry-run": false};
 
         // Act
-        const {main} = await import("../bin/x");
         await main();
 
         // Assert
-        expect(listImplMock).toHaveBeenCalledWith({
+        expect(vi.mocked(listImpl)).toHaveBeenCalledWith({
             mode: "names-only",
             json: true,
         });
@@ -547,47 +439,20 @@ describe("bin/x", () => {
 
     it("should not execute a script when --list is provided", async () => {
         // Arrange
-        const xImplMock = vi.fn().mockResolvedValue({exitCode: 0});
-        vi.doMock("../list-impl", () => ({
-            listImpl: vi.fn().mockResolvedValue({exitCode: 0}),
-        }));
-        vi.doMock("../x-impl", () => ({xImpl: xImplMock}));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                list: "",
-                json: false,
-                _: [],
-                "dry-run": false,
-            }),
-        );
+        state.parsedArgs = {list: "", json: false, _: [], "dry-run": false};
 
         // Act
-        const {main} = await import("../bin/x");
         await main();
 
         // Assert
-        expect(xImplMock).not.toHaveBeenCalled();
+        expect(vi.mocked(xImpl)).not.toHaveBeenCalled();
     });
 
     it("should exit with the listing result exit code when --list is provided", async () => {
         // Arrange
-        vi.doMock("../list-impl", () => ({
-            listImpl: vi.fn().mockResolvedValue({exitCode: 0}),
-        }));
-        vi.doMock("../x-impl", () => ({
-            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
-        }));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                list: "",
-                json: false,
-                _: [],
-                "dry-run": false,
-            }),
-        );
+        state.parsedArgs = {list: "", json: false, _: [], "dry-run": false};
 
         // Act
-        const {main} = await import("../bin/x");
         await main();
 
         // Assert
@@ -597,23 +462,8 @@ describe("bin/x", () => {
     it("should propagate unexpected errors thrown during listing", async () => {
         // Arrange
         const unexpectedError = new Error("Unexpected");
-        vi.doMock("../list-impl", () => ({
-            listImpl: vi.fn().mockRejectedValue(unexpectedError),
-        }));
-        vi.doMock("../x-impl", () => ({
-            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
-        }));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                list: "",
-                json: false,
-                _: [],
-                "dry-run": false,
-            }),
-        );
-
-        // Act
-        const {main} = await import("../bin/x");
+        vi.mocked(listImpl).mockRejectedValue(unexpectedError);
+        state.parsedArgs = {list: "", json: false, _: [], "dry-run": false};
 
         // Assert
         await expect(main()).rejects.toThrow(unexpectedError);
@@ -621,21 +471,15 @@ describe("bin/x", () => {
 
     it("should exit with 1 when no script name is provided", async () => {
         // Arrange
-        vi.doMock("../x-impl", () => ({
-            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
-        }));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                "script-name": undefined,
-                list: undefined,
-                json: false,
-                _: [],
-                "dry-run": false,
-            }),
-        );
+        state.parsedArgs = {
+            "script-name": undefined,
+            list: undefined,
+            json: false,
+            _: [],
+            "dry-run": false,
+        };
 
         // Act
-        const {main} = await import("../bin/x");
         try {
             await main();
         } catch {
@@ -648,21 +492,15 @@ describe("bin/x", () => {
 
     it("should report an error when no script name is provided", async () => {
         // Arrange
-        vi.doMock("../x-impl", () => ({
-            xImpl: vi.fn().mockResolvedValue({exitCode: 0}),
-        }));
-        vi.doMock("yargs", () =>
-            buildYargsMock({
-                "script-name": undefined,
-                list: undefined,
-                json: false,
-                _: [],
-                "dry-run": false,
-            }),
-        );
+        state.parsedArgs = {
+            "script-name": undefined,
+            list: undefined,
+            json: false,
+            _: [],
+            "dry-run": false,
+        };
 
         // Act
-        const {main} = await import("../bin/x");
         try {
             await main();
         } catch {

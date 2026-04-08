@@ -228,32 +228,16 @@ describe("listImpl", () => {
     });
 
     describe("error handling", () => {
-        it("should return exit code 1 when no packages are found in the workspace", async () => {
+        it("should throw HandledError when no packages are found in the workspace", async () => {
             // Arrange
             vi.mocked(
                 discoverPackagesModule.discoverPackages,
             ).mockResolvedValue([]);
 
-            // Act
-            const result = await listImpl({mode: "names-only", json: false});
-
-            // Assert
-            expect(result.exitCode).toBe(1);
-        });
-
-        it("should report an error when no packages are found in the workspace", async () => {
-            // Arrange
-            vi.mocked(
-                discoverPackagesModule.discoverPackages,
-            ).mockResolvedValue([]);
-
-            // Act
-            await listImpl({mode: "names-only", json: false});
-
-            // Assert
-            expect(console.error).toHaveBeenCalledWith(
-                expect.stringContaining("No packages found"),
-            );
+            // Act/Assert
+            await expect(
+                listImpl({mode: "names-only", json: false}),
+            ).rejects.toThrow("No packages found in workspace");
         });
 
         it("should propagate unexpected errors", async () => {

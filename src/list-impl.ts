@@ -69,30 +69,22 @@ function listFull(
  * @returns Result object with exit code
  */
 export async function listImpl(options: ListOptions): Promise<ListResult> {
-    try {
-        const workspaceRoot = await findWorkspaceRoot();
-        const packages = await discoverPackages(workspaceRoot);
+    const workspaceRoot = await findWorkspaceRoot();
+    const packages = await discoverPackages(workspaceRoot);
 
-        if (packages.length === 0) {
-            throw new HandledError(
-                "No packages found in workspace. Is this a valid monorepo?",
-            );
-        }
-
-        const packageBins = await listAllBins(packages);
-
-        if (options.mode === "names-only") {
-            listNamesOnly(packageBins, options.json);
-            return {exitCode: 0};
-        }
-
-        listFull(packageBins, workspaceRoot, options.json);
-        return {exitCode: 0};
-    } catch (error) {
-        if (error instanceof HandledError) {
-            console.error(`Error: ${error.message}`);
-            return {exitCode: 1};
-        }
-        throw error;
+    if (packages.length === 0) {
+        throw new HandledError(
+            "No packages found in workspace. Is this a valid monorepo?",
+        );
     }
+
+    const packageBins = await listAllBins(packages);
+
+    if (options.mode === "names-only") {
+        listNamesOnly(packageBins, options.json);
+        return {exitCode: 0};
+    }
+
+    listFull(packageBins, workspaceRoot, options.json);
+    return {exitCode: 0};
 }

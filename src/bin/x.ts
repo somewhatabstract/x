@@ -2,6 +2,7 @@
 import {fileURLToPath} from "node:url";
 import yargs from "yargs";
 import {hideBin} from "yargs/helpers";
+import {HandledError} from "../errors";
 import {listImpl} from "../list-impl";
 import {xImpl} from "../x-impl";
 
@@ -107,7 +108,11 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     try {
         await main();
     } catch (error) {
-        console.error("Unexpected error:", error);
+        if (error instanceof HandledError) {
+            console.error(`Error: ${error.message}`);
+        } else {
+            console.error("Unexpected error:", error);
+        }
         process.exit(1);
     }
 }

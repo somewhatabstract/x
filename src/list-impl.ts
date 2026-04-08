@@ -2,7 +2,7 @@ import * as path from "node:path";
 import {discoverPackages} from "./discover-packages";
 import {HandledError} from "./errors";
 import {findWorkspaceRoot} from "./find-workspace-root";
-import {listAllBins} from "./list-bins";
+import {type PackageBinInfo, listAllBins} from "./list-bins";
 
 export type ListMode = "names-only" | "full";
 
@@ -13,6 +13,53 @@ export interface ListOptions {
 
 export interface ListResult {
     exitCode: number;
+}
+
+function listNamesOnly(packageBins: PackageBinInfo[], json: boolean): void {
+    const uniqueBinNames = [
+        ...new Set(packageBins.flatMap((pkg) => pkg.bins)),
+    ].sort();
+
+    if (json) {
+        console.log(JSON.stringify(uniqueBinNames));
+        return;
+    }
+
+    for (const name of uniqueBinNames) {
+        console.log(name);
+    }
+}
+
+function listFull(
+    packageBins: PackageBinInfo[],
+    workspaceRoot: string,
+    json: boolean,
+): void {
+    const sorted = [...packageBins].sort((a, b) =>
+        a.packageName.localeCompare(b.packageName),
+    );
+
+    if (json) {
+        const output: Record<string, {path: string; scripts: string[]}> = {};
+        for (const pkg of sorted) {
+            output[pkg.packageName] = {
+                path: `./${path.relative(workspaceRoot, pkg.packagePath)}`,
+                scripts: [...pkg.bins].sort(),
+            };
+        }
+        console.log(JSON.stringify(output));
+        return;
+    }
+
+    for (const pkg of sorted) {
+        console.log(
+            `${pkg.packageName} (./${path.relative(workspaceRoot, pkg.packagePath)})`,
+        );
+        for (const bin of [...pkg.bins].sort()) {
+            console.log(`   ${bin}`);
+        }
+        console.log();
+    }
 }
 
 /**
@@ -35,54 +82,11 @@ export async function listImpl(options: ListOptions): Promise<ListResult> {
         const packageBins = await listAllBins(packages);
 
         if (options.mode === "names-only") {
-            // Collect all unique bin names, sorted lexicographically
-            const allBinNames = packageBins.flatMap((pkg) => pkg.bins);
-            const uniqueBinNames = [...new Set(allBinNames)].sort();
-
-            if (options.json) {
-                console.log(JSON.stringify(uniqueBinNames));
-            } else {
-                for (const name of uniqueBinNames) {
-                    console.log(name);
-                }
-            }
-        } else {
-            // full mode: grouped by package, sorted lexicographically by package name
-            const sorted = [...packageBins].sort((a, b) =>
-                a.packageName.localeCompare(b.packageName),
-            );
-
-            if (options.json) {
-                const output: Record<
-                    string,
-                    {path: string; scripts: string[]}
-                > = {};
-                for (const pkg of sorted) {
-                    const relativePath = path.relative(
-                        workspaceRoot,
-                        pkg.packagePath,
-                    );
-                    output[pkg.packageName] = {
-                        path: `./${relativePath}`,
-                        scripts: [...pkg.bins].sort(),
-                    };
-                }
-                console.log(JSON.stringify(output));
-            } else {
-                for (const pkg of sorted) {
-                    const relativePath = path.relative(
-                        workspaceRoot,
-                        pkg.packagePath,
-                    );
-                    console.log(`${pkg.packageName} (./${relativePath})`);
-                    for (const bin of [...pkg.bins].sort()) {
-                        console.log(`   ${bin}`);
-                    }
-                    console.log();
-                }
-            }
+            listNamesOnly(packageBins, options.json);
+            return {exitCode: 0};
         }
 
+        listFull(packageBins, workspaceRoot, options.json);
         return {exitCode: 0};
     } catch (error) {
         if (error instanceof HandledError) {

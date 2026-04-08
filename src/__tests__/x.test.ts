@@ -2,7 +2,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
 
 // Build a mock yargs chain that returns the given parsed args from parseSync
 const buildYargsMock = (parsedArgs: Record<string, unknown>) => {
-    let checkFn: ((argv: Record<string, unknown>) => true) | undefined;
+    let yargsCheckFn: ((argv: Record<string, unknown>) => true) | undefined;
 
     const yargsChain: Record<string, unknown> = {
         usage: vi.fn().mockReturnThis(),
@@ -16,19 +16,21 @@ const buildYargsMock = (parsedArgs: Record<string, unknown>) => {
         positional: vi.fn().mockReturnThis(),
         check: vi.fn().mockImplementation((fn: unknown) => {
             if (typeof fn === "function") {
-                checkFn = fn as (argv: Record<string, unknown>) => true;
+                yargsCheckFn = fn as (argv: Record<string, unknown>) => true;
             }
             return yargsChain;
         }),
         parseSync: vi.fn().mockImplementation(() => {
-            if (checkFn) {
+            if (yargsCheckFn) {
                 try {
-                    checkFn(parsedArgs);
+                    yargsCheckFn(parsedArgs);
                 } catch (e) {
                     // Simulate yargs validation error: print message and exit
                     console.error((e as Error).message);
                     process.exit(1);
-                    // Re-throw to prevent further execution when process.exit is mocked
+                    // Re-throw so that main() surfaces the error when process.exit
+                    // is mocked to a no-op in tests, preventing subsequent code from
+                    // running as if validation had passed.
                     throw e;
                 }
             }

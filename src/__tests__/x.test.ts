@@ -1,9 +1,5 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
 
-// Utility to wait for all pending promises and timers to settle
-const flushPromises = () =>
-    new Promise<void>((resolve) => setTimeout(resolve, 0));
-
 // Build a mock yargs chain that returns the given parsed args from parseSync
 const buildYargsMock = (parsedArgs: Record<string, unknown>) => {
     const yargsChain: Record<string, unknown> = {
@@ -64,8 +60,8 @@ describe("bin/x", () => {
         );
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(xImplMock).toHaveBeenCalledWith(
@@ -90,8 +86,8 @@ describe("bin/x", () => {
         process.argv = ["node", "x.mjs", "my-script", "--", "--flag", "value"];
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(xImplMock).toHaveBeenCalledWith(
@@ -115,8 +111,8 @@ describe("bin/x", () => {
         );
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(xImplMock).toHaveBeenCalledWith(
@@ -140,8 +136,8 @@ describe("bin/x", () => {
         );
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(xImplMock).toHaveBeenCalledWith(
@@ -165,8 +161,8 @@ describe("bin/x", () => {
         );
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(xImplMock).toHaveBeenCalledWith(
@@ -191,8 +187,8 @@ describe("bin/x", () => {
         );
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(processExitSpy).toHaveBeenCalledWith(42);
@@ -213,8 +209,8 @@ describe("bin/x", () => {
         );
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(processExitSpy).toHaveBeenCalledWith(1);
@@ -235,8 +231,8 @@ describe("bin/x", () => {
         );
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(console.error).toHaveBeenCalledWith(
@@ -265,8 +261,8 @@ describe("bin/x", () => {
         ];
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(xImplMock).toHaveBeenCalledWith(
@@ -297,8 +293,8 @@ describe("bin/x", () => {
         ];
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(console.warn).toHaveBeenCalledWith(
@@ -327,8 +323,8 @@ describe("bin/x", () => {
         ];
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(console.warn).toHaveBeenCalledWith(
@@ -358,8 +354,8 @@ describe("bin/x", () => {
         ];
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(console.warn).not.toHaveBeenCalled();
@@ -386,8 +382,8 @@ describe("bin/x", () => {
         ];
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(console.warn).not.toHaveBeenCalled();
@@ -407,8 +403,8 @@ describe("bin/x", () => {
         process.argv = ["node", "x.mjs", "e2e", "setup", "verify"];
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(xImplMock).toHaveBeenCalledWith(
@@ -434,8 +430,8 @@ describe("bin/x", () => {
         process.argv = ["node", "x.mjs", "e2e", "setup", "--flag", "value"];
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(console.warn).toHaveBeenCalledWith(
@@ -460,8 +456,8 @@ describe("bin/x", () => {
         );
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(listImplMock).toHaveBeenCalledWith({
@@ -487,8 +483,8 @@ describe("bin/x", () => {
         );
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(listImplMock).toHaveBeenCalledWith({
@@ -514,8 +510,8 @@ describe("bin/x", () => {
         );
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(listImplMock).toHaveBeenCalledWith({
@@ -541,8 +537,8 @@ describe("bin/x", () => {
         );
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(listImplMock).toHaveBeenCalledWith({
@@ -568,8 +564,8 @@ describe("bin/x", () => {
         );
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(xImplMock).not.toHaveBeenCalled();
@@ -593,8 +589,8 @@ describe("bin/x", () => {
         );
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(processExitSpy).toHaveBeenCalledWith(0);
@@ -618,8 +614,8 @@ describe("bin/x", () => {
         );
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(processExitSpy).toHaveBeenCalledWith(1);
@@ -641,8 +637,8 @@ describe("bin/x", () => {
         );
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(processExitSpy).toHaveBeenCalledWith(1);
@@ -664,8 +660,8 @@ describe("bin/x", () => {
         );
 
         // Act
-        await import("../bin/x");
-        await flushPromises();
+        const {main} = await import("../bin/x");
+        await main();
 
         // Assert
         expect(console.error).toHaveBeenCalledWith(

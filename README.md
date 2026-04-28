@@ -1,6 +1,21 @@
 # x
 
-Execute any bin defined by any package within a monorepo without needing to install that package at the root.
+<div style="display: flex; align-items: center; gap: 1em; margin-bottom: 1em;">
+   <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="./assets/wordmark-dark.png" />
+      <img alt="Project wordmark" src="./assets/wordmark-light.png"/>
+   </picture>
+</div>
+
+<div style="display: flex; align-items: center; gap: 1em; margin-bottom: 1em;">
+   <picture style="flex-shrink: 0; width: 64px; height: 64px;">
+         <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="./assets/logo-dark.png" />
+         <source media="(prefers-reduced-motion: reduce)" srcset="./assets/logo-light.png" />
+         <source media="(prefers-color-scheme: dark)" srcset="./assets/x-logo-dark.gif" />
+         <img alt="Animated project logo" src="assets/x-logo-light.gif"/>
+   </picture>
+   <span>Easily execute bin scripts from monorepo packages without installing them at the root.</span>
+</div>
 
 ## Overview
 

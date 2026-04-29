@@ -1,4 +1,4 @@
-import {afterEach, describe, expect, it, vi} from "vitest";
+import {afterEach, describe, expect, it} from "vitest";
 import {useColor} from "../use-color";
 
 function restoreEnvVar(envName: string, value: string | undefined) {

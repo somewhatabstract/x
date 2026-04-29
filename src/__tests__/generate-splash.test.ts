@@ -1,4 +1,4 @@
-import {afterEach, describe, expect, it, vi} from "vitest";
+import {describe, expect, it, vi} from "vitest";
 import {generateSplash} from "../generate-splash";
 import * as UseColor from "../use-color";
 

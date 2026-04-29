@@ -27,7 +27,7 @@ export async function xImpl(
     options: XOptions = {},
 ): Promise<XResult> {
     try {
-        if (!scriptName || !scriptName.trim()) {
+        if (!scriptName?.trim()) {
             throw new HandledError("Script name cannot be empty");
         }
         if (scriptName.includes("/") || scriptName.includes("\\")) {

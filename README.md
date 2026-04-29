@@ -14,7 +14,7 @@
          <source media="(prefers-color-scheme: dark)" srcset="./assets/x-logo-light.gif" />
          <img style="width: 64px; height: 64px;" alt="Animated project logo" src="assets/x-logo-dark.gif"/>
    </picture>
-   <span>Easily execute bin scripts from monorepo packages without installing them at the root.</span>
+   <div>Easily execute bin scripts from monorepo packages without installing them at the root.</div>
 </div>
 
 ## Overview

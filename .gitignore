@@ -65,6 +65,9 @@ web_modules/
 # Output of 'npm pack'
 *.tgz
 
+# Publish-time README backup
+README.md.bak
+
 # Yarn Integrity file
 .yarn-integrity
 

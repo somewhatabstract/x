@@ -9,8 +9,7 @@
         "x": "./dist/x.mjs"
     },
     "files": [
-        "dist",
-        "assets"
+        "dist"
     ],
     "type": "module",
     "version": "0.2.0",
@@ -24,6 +23,8 @@
         "typewatch": "pnpm typecheck --watch",
         "test": "vitest",
         "coverage": "vitest run --coverage",
+        "prepack": "node scripts/pack-readme.mjs rewrite",
+        "postpack": "node scripts/pack-readme.mjs restore",
         "prepublishOnly": "pnpm build",
         "publish:ci": "git diff --stat --exit-code HEAD && pnpm build && changeset publish"
     },

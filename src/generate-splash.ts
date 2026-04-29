@@ -10,7 +10,6 @@ const rgb = (r: number, g: number, b: number) => (s: string) =>
 const pink = rgb(255, 45, 149); // #ff2d95
 const cyan = rgb(46, 230, 255); // #2ee6ff
 const dim = rgb(154, 160, 180); // #9aa0b4
-const fg = rgb(230, 230, 240); // #e6e6f0
 
 // Canonical 6-row ANSI Shadow forms for `>` and `x`, zipped row-by-row.
 const caret = ["██╗  ", "╚██╗ ", " ╚██╗", " ██╔╝", "██╔╝ ", "╚═╝  "];

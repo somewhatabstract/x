@@ -1,18 +1,24 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
 import {main} from "../bin/x";
+import {HandledError} from "../errors";
+import {listImpl} from "../list-impl";
 import {outputHelpWithSplash} from "../output-help-with-splash";
 import {xImpl} from "../x-impl";
 
 vi.mock("../x-impl");
 
+vi.mock("../list-impl");
+
 vi.mock("../output-help-with-splash");
 
 describe("bin/x", () => {
     const xImplMock = vi.mocked(xImpl);
+    const listImplMock = vi.mocked(listImpl);
     const outputHelpWithSplashMock = vi.mocked(outputHelpWithSplash);
 
     beforeEach(() => {
         xImplMock.mockReset();
+        listImplMock.mockReset();
         outputHelpWithSplashMock.mockReset();
         vi.spyOn(console, "error").mockImplementation(() => {});
         vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -343,6 +349,92 @@ describe("bin/x", () => {
         // Assert
         expect(console.warn).toHaveBeenCalledWith(
             "  x e2e -- setup --flag value",
+        );
+    });
+
+    it("should use names-only mode when --list is used without a value", async () => {
+        // Arrange
+        listImplMock.mockResolvedValue({exitCode: 0});
+
+        // Act
+        await main(["node", "x.mjs", "--list"]);
+
+        // Assert
+        expect(listImplMock).toHaveBeenCalledWith({
+            mode: "names-only",
+            json: false,
+        });
+    });
+
+    it("should use full mode when --list=full is specified", async () => {
+        // Arrange
+        listImplMock.mockResolvedValue({exitCode: 0});
+
+        // Act
+        await main(["node", "x.mjs", "--list=full"]);
+
+        // Assert
+        expect(listImplMock).toHaveBeenCalledWith({
+            mode: "full",
+            json: false,
+        });
+    });
+
+    it("should use JSON output format when --list and --json are used", async () => {
+        // Arrange
+        listImplMock.mockResolvedValue({exitCode: 0});
+
+        // Act
+        await main(["node", "x.mjs", "--list", "--json"]);
+
+        // Assert
+        expect(listImplMock).toHaveBeenCalledWith({
+            mode: "names-only",
+            json: true,
+        });
+    });
+
+    it("should not execute a script when --list is provided", async () => {
+        // Arrange
+        listImplMock.mockResolvedValue({exitCode: 0});
+
+        // Act
+        await main(["node", "x.mjs", "--list"]);
+
+        // Assert
+        expect(xImplMock).not.toHaveBeenCalled();
+    });
+
+    it("should return the listing result exit code when --list is provided", async () => {
+        // Arrange
+        listImplMock.mockResolvedValue({exitCode: 0});
+
+        // Act
+        const result = await main(["node", "x.mjs", "--list"]);
+
+        // Assert
+        expect(result.exitCode).toBe(0);
+    });
+
+    it("should propagate unexpected errors thrown during listing", async () => {
+        // Arrange
+        const unexpectedError = new Error("Unexpected");
+        listImplMock.mockRejectedValue(unexpectedError);
+
+        // Assert
+        await expect(main(["node", "x.mjs", "--list"])).rejects.toThrow(
+            unexpectedError,
+        );
+    });
+
+    it("should propagate HandledError thrown during listing", async () => {
+        // Arrange
+        const handledError = new HandledError("No packages found");
+        listImplMock.mockRejectedValue(handledError);
+
+        // Assert
+        await expect(main(["node", "x.mjs", "--list"])).rejects.toThrow(
+            handledError,
         );
     });
 });

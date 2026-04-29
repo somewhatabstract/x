@@ -2,6 +2,8 @@
 import {fileURLToPath} from "node:url";
 import yargs from "yargs";
 import {hideBin} from "yargs/helpers";
+import {HandledError} from "../errors";
+import {listImpl} from "../list-impl";
 import {outputHelpWithSplash} from "../output-help-with-splash";
 import {type XResult, xImpl} from "../x-impl";
 
@@ -10,21 +12,43 @@ export async function main(rawArgv: string[]): Promise<XResult> {
     const yi = yargs(rawArgs)
         .usage("Usage: $0 <script-name> [...args]")
         .command(
-            "$0 <script-name>",
+            "$0 [script-name]",
             "Execute a bin script from any package in the workspace",
             (yargs) => {
                 return yargs.positional("script-name", {
                     describe: "Name of the bin script to execute",
                     type: "string",
-                    demandOption: true,
+                    demandOption: false,
                 });
             },
         )
+        .option("list", {
+            alias: "l",
+            describe:
+                "List available commands. Use --list=full to include package details",
+            type: "string",
+        })
+        .option("json", {
+            describe: "Output in JSON format (use with --list)",
+            type: "boolean",
+            default: false,
+        })
         .option("dry-run", {
             alias: "d",
             describe: "Show what would be executed without running it",
             type: "boolean",
             default: false,
+        })
+        .check((argv) => {
+            if (
+                argv.list === undefined &&
+                !(argv["script-name"] as string | undefined)?.trim()
+            ) {
+                throw new Error(
+                    "script-name is required. Use --list to see available commands.",
+                );
+            }
+            return true;
         })
         .help(false)
         .option("help", {
@@ -39,12 +63,20 @@ export async function main(rawArgv: string[]): Promise<XResult> {
         })
         .version()
         .alias("version", "v")
-        .example("$0 tsc --noEmit", "Run TypeScript compiler from any package")
         .example(
-            "$0 eslint src/",
-            "Run ESLint from any package that provides it",
+            "$0 my-tool --myArg",
+            "Run the bin my-tool from a package in the workspace with the --myArg flag",
         )
-        .example("$0 --dry-run jest", "Preview which jest would be executed")
+        .example(
+            "$0 --dry-run my-tool",
+            "Preview how the my-tool bin would be resolved",
+        )
+        .example("$0 --list", "List all available bin scripts")
+        .example(
+            "$0 --list=full",
+            "List available bin scripts grouped by package",
+        )
+        .example("$0 --list --json", "List commands as JSON")
         .parserConfiguration({"unknown-options-as-args": true});
 
     const argv = await yi.parse();
@@ -54,8 +86,14 @@ export async function main(rawArgv: string[]): Promise<XResult> {
         return {exitCode: 0};
     }
 
-    // Extract script name and args
-    const scriptName = argv["script-name"] as string;
+    // Check if we are in list mode
+    const listArg = argv.list;
+    if (listArg !== undefined) {
+        const mode = listArg === "full" ? "full" : "names-only";
+        const json = !!argv.json;
+        return await listImpl({mode, json});
+    }
+
     const args = (argv._ as string[]) || [];
     const options = {
         dryRun: argv["dry-run"] as boolean,
@@ -63,6 +101,7 @@ export async function main(rawArgv: string[]): Promise<XResult> {
 
     // If any args look like flags and -- was not used, warn the user and suggest
     // using -- to explicitly separate flag arguments from x's own options.
+    const scriptName = (argv["script-name"] as string).trim();
     if (!rawArgs.includes("--")) {
         const flagLikeArgs = args.filter(
             (arg) => typeof arg === "string" && arg.startsWith("-"),
@@ -87,7 +126,11 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
             process.exit(result.exitCode);
         })
         .catch((error) => {
-            console.error("Unexpected error:", error);
+            if (error instanceof HandledError) {
+                console.error(`Error: ${error.message}`);
+            } else {
+                console.error("Unexpected error:", error);
+            }
             process.exit(1);
         });
 }

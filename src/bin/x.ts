@@ -54,14 +54,19 @@ export async function main(): Promise<void> {
         .alias("help", "h")
         .version()
         .alias("version", "v")
-        .example("$0 tsc --noEmit", "Run TypeScript compiler from any package")
         .example(
-            "$0 eslint src/",
-            "Run ESLint from any package that provides it",
+            "$0 my-tool --myArg",
+            "Run the bin my-tool from a package in the workspace with the --myArg flag",
         )
-        .example("$0 --dry-run jest", "Preview which jest would be executed")
-        .example("$0 --list", "List all available commands")
-        .example("$0 --list=full", "List commands grouped by package")
+        .example(
+            "$0 --dry-run my-tool",
+            "Preview how the my-tool bin would be resolved",
+        )
+        .example("$0 --list", "List all available bin scripts")
+        .example(
+            "$0 --list=full",
+            "List available bin scripts grouped by package",
+        )
         .example("$0 --list --json", "List commands as JSON")
         .parserConfiguration({"unknown-options-as-args": true})
         .parseSync();

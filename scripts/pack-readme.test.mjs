@@ -5,9 +5,9 @@
  * Run as part of `pnpm test` so CI catches this automatically.
  */
 
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import {existsSync, readFileSync} from "node:fs";
+import {join} from "node:path";
+import {describe, expect, it} from "vitest";
 
 const root = join(import.meta.dirname, "..");
 

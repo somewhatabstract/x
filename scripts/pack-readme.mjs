@@ -11,10 +11,15 @@
  *   node scripts/pack-readme.mjs restore   # called by postpack
  */
 
-import { copyFileSync, existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import {
+    copyFileSync,
+    existsSync,
+    readFileSync,
+    unlinkSync,
+    writeFileSync,
+} from "node:fs";
 
-const BASE_URL =
-    "https://raw.githubusercontent.com/somewhatabstract/x/main/";
+const BASE_URL = "https://raw.githubusercontent.com/somewhatabstract/x/main/";
 const BACKUP = "README.md.bak";
 const README = "README.md";
 

@@ -1,20 +1,18 @@
-# x
-
-<div style="display: flex; align-items: center; gap: 1em; margin-bottom: 1em;">
+<div>
    <picture>
       <source media="(prefers-color-scheme: dark)" srcset="./assets/wordmark-light.png" />
       <img alt="Project wordmark" src="./assets/wordmark-dark.png"/>
    </picture>
 </div>
 
-<div style="display: flex; align-items: center; gap: 1em; margin-bottom: 1em;">
-   <picture style="flex-shrink: 0;">
+<div>
+   <picture style="vertical-align: middle;">
          <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="./assets/logo-light.png" />
          <source media="(prefers-reduced-motion: reduce)" srcset="./assets/logo-dark.png" />
          <source media="(prefers-color-scheme: dark)" srcset="./assets/x-logo-light.gif" />
          <img style="width: 64px; height: 64px;" alt="Animated project logo" src="assets/x-logo-dark.gif"/>
    </picture>
-   <span>Easily execute bin scripts from monorepo packages without installing them at the root.</span>
+   <span style="vertical-align: middle;">Easily execute bin scripts from monorepo packages without installing them at the root.</span>
 </div>
 
 ## Overview

@@ -46,7 +46,7 @@ This only executes bin scripts defined by packages in your workspace, not their 
 ## Features
 
 - 🔍 **Automatic Discovery**: Finds all packages in your monorepo workspace
-- 🚀 **No Installation Needed**: Execute bins from the root without needing to install your workspace packages in the root package
+- 🚀 **No Installation Needed**: Execute bins from the root without needing to install your monorepo packages in the root package
 - 👁️ **Dry-Run Mode**: Preview what would be executed with `--dry-run`
 - 🔧 **Multi-Language Support**: Works with any executable script (Node.js, Bash, Python, etc.)
 - 📦 **Multi-Package-Manager**: Works with npm, Yarn, pnpm, Lerna, Bun, and Rush

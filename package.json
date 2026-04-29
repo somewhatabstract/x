@@ -9,7 +9,8 @@
         "x": "./dist/x.mjs"
     },
     "files": [
-        "dist"
+        "dist",
+        "assets"
     ],
     "type": "module",
     "version": "0.2.0",

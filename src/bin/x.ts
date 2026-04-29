@@ -3,12 +3,25 @@ import {fileURLToPath} from "node:url";
 import yargs from "yargs";
 import {hideBin} from "yargs/helpers";
 import {HandledError} from "../errors";
+import {getCompletions} from "../get-completions";
 import {listImpl} from "../list-impl";
 import {outputHelpWithSplash} from "../output-help-with-splash";
 import {type XResult, xImpl} from "../x-impl";
 
 export async function main(rawArgv: string[]): Promise<XResult> {
     const rawArgs = hideBin(rawArgv);
+
+    // We have to do our own completion handling because yargs doesn't support
+    // async completion functions, and we need to do async work to get the
+    // completions (finding workspace root and reading package bins).
+    if (rawArgs.includes("--get-yargs-completions")) {
+        const completions = await getCompletions(rawArgs);
+        for (const b of completions) {
+            console.log(b);
+        }
+        return {exitCode: 0};
+    }
+
     const yi = yargs(rawArgs)
         .usage("Usage: $0 <script-name> [...args]")
         .command(
@@ -50,6 +63,7 @@ export async function main(rawArgv: string[]): Promise<XResult> {
             }
             return true;
         })
+        // We're handling help text ourselves so we can include the spash.
         .help(false)
         .option("help", {
             alias: "h",
@@ -77,6 +91,16 @@ export async function main(rawArgv: string[]): Promise<XResult> {
             "List available bin scripts grouped by package",
         )
         .example("$0 --list --json", "List commands as JSON")
+        // The default yargs completion command is "completion", but that could
+        // be the name of a script we are asked to run, so let's make this
+        // something unlikely to conflict with real script names.
+        .completion("--completion", "Generate shell completion script")
+        // This is needed to allow passing args that look like flags to the
+        // script we are executing without yargs trying to parse them. With
+        // this, any unknown options will be collected in argv._ instead of
+        // causing an error. Users will need to use -- to separate x's options
+        // from the script's options, but we will also do a best effort to
+        // detect if they forgot to do that and warn them.
         .parserConfiguration({"unknown-options-as-args": true});
 
     const argv = await yi.parse();

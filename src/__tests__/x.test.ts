@@ -300,17 +300,15 @@ describe("bin/x", () => {
         expect(xImplMock).not.toHaveBeenCalled();
     });
 
-    it("should terminate with exit code 1 when required input is missing", async () => {
+    it("should return with exit code 1 when required input is missing", async () => {
         // Arrange
         outputHelpWithSplashMock.mockImplementation(() => {});
 
         // Act
-        await expect(main(["node", "x.mjs"])).rejects.toThrow(
-            "process.exit called",
-        );
+        const result = await main(["node", "x.mjs"]);
 
         // Assert
-        expect(process.exit).toHaveBeenCalledWith(1);
+        expect(result).toEqual({exitCode: 1});
     });
 
     it("should display help content when required input is missing", async () => {
@@ -318,9 +316,7 @@ describe("bin/x", () => {
         outputHelpWithSplashMock.mockImplementation(() => {});
 
         // Act
-        await expect(main(["node", "x.mjs"])).rejects.toThrow(
-            "process.exit called",
-        );
+        await main(["node", "x.mjs"]);
 
         // Assert
         expect(outputHelpWithSplashMock).toHaveBeenCalledTimes(1);
@@ -331,9 +327,7 @@ describe("bin/x", () => {
         outputHelpWithSplashMock.mockImplementation(() => {});
 
         // Act
-        await expect(main(["node", "x.mjs"])).rejects.toThrow(
-            "process.exit called",
-        );
+        await main(["node", "x.mjs"]);
 
         // Assert
         expect(outputHelpWithSplashMock.mock.calls[0]?.[1]).toBeTruthy();

@@ -23,7 +23,7 @@ function containsHostInUrls(text, expectedHost) {
     });
 }
 
-describe("pack-readme", () => {
+describe("readme integrity", () => {
     it("should not leave a README backup file behind", () => {
         // Arrange
         const backupPath = join(root, "README.md.bak");

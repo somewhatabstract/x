@@ -1,17 +1,9 @@
 #!/usr/bin/env node
 import {pathToFileURL} from "node:url";
-import yargs, {type Argv} from "yargs";
+import yargs from "yargs";
 import {hideBin} from "yargs/helpers";
-import {generateSplash} from "../generate-splash";
+import {outputHelpWithSplash} from "../output-help-with-splash";
 import {type XResult, xImpl} from "../x-impl";
-
-const outputHelpAndExit = (parsedYargs: Argv, msg?: string): void => {
-    process.stdout.write(generateSplash());
-    parsedYargs.showHelp();
-    if (msg) {
-        console.error(`\n ${msg}`);
-    }
-};
 
 export async function main(rawArgv: string[]): Promise<XResult> {
     const rawArgs = hideBin(rawArgv);
@@ -42,7 +34,7 @@ export async function main(rawArgv: string[]): Promise<XResult> {
             default: false,
         })
         .fail((msg, _err, yargs) => {
-            outputHelpAndExit(yargs, msg);
+            outputHelpWithSplash(yargs, msg);
             process.exit(1);
         })
         .version()
@@ -58,7 +50,7 @@ export async function main(rawArgv: string[]): Promise<XResult> {
     const argv = await yi.parse();
 
     if (argv.help || argv.h) {
-        outputHelpAndExit(yi);
+        outputHelpWithSplash(yi);
         return {exitCode: 0};
     }
 

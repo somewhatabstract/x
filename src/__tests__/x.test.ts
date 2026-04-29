@@ -1,18 +1,24 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
 import {main} from "../bin/x";
+import {outputHelpWithSplash} from "../output-help-with-splash";
 import {xImpl} from "../x-impl";
 
-vi.mock("../x-impl", () => ({
-    xImpl: vi.fn(),
-}));
+vi.mock("../x-impl");
+
+vi.mock("../output-help-with-splash");
 
 describe("bin/x", () => {
     const xImplMock = vi.mocked(xImpl);
+    const outputHelpWithSplashMock = vi.mocked(outputHelpWithSplash);
 
     beforeEach(() => {
         xImplMock.mockReset();
+        outputHelpWithSplashMock.mockReset();
         vi.spyOn(console, "error").mockImplementation(() => {});
         vi.spyOn(console, "warn").mockImplementation(() => {});
+        vi.spyOn(process, "exit").mockImplementation((() => {
+            throw new Error("process.exit called");
+        }) as never);
     });
 
     afterEach(() => {
@@ -220,6 +226,111 @@ describe("bin/x", () => {
             expect.any(Object),
         );
         expect(console.warn).not.toHaveBeenCalled();
+    });
+
+    it("should return success when help is requested with --help", async () => {
+        // Arrange
+        xImplMock.mockResolvedValue({exitCode: 99});
+
+        // Act
+        const result = await main(["node", "x.mjs", "my-script", "--help"]);
+
+        // Assert
+        expect(result).toEqual({exitCode: 0});
+    });
+
+    it("should display help when --help is provided", async () => {
+        // Arrange
+        xImplMock.mockResolvedValue({exitCode: 99});
+
+        // Act
+        await main(["node", "x.mjs", "my-script", "--help"]);
+
+        // Assert
+        expect(outputHelpWithSplashMock).toHaveBeenCalledOnce();
+    });
+
+    it("should skip script execution when --help is provided", async () => {
+        // Arrange
+        xImplMock.mockResolvedValue({exitCode: 99});
+
+        // Act
+        await main(["node", "x.mjs", "my-script", "--help"]);
+
+        // Assert
+        expect(xImplMock).not.toHaveBeenCalled();
+    });
+
+    it("should return success when help is requested with -h", async () => {
+        // Arrange
+        xImplMock.mockResolvedValue({exitCode: 99});
+
+        // Act
+        const result = await main(["node", "x.mjs", "my-script", "-h"]);
+
+        // Assert
+        expect(result).toEqual({exitCode: 0});
+    });
+
+    it("should display help when -h is provided", async () => {
+        // Arrange
+        xImplMock.mockResolvedValue({exitCode: 99});
+
+        // Act
+        await main(["node", "x.mjs", "my-script", "-h"]);
+
+        // Assert
+        expect(outputHelpWithSplashMock).toHaveBeenCalledOnce();
+    });
+
+    it("should stop script execution when -h is provided", async () => {
+        // Arrange
+        xImplMock.mockResolvedValue({exitCode: 99});
+
+        // Act
+        await main(["node", "x.mjs", "my-script", "-h"]);
+
+        // Assert
+        expect(xImplMock).not.toHaveBeenCalled();
+    });
+
+    it("should terminate with exit code 1 when required input is missing", async () => {
+        // Arrange
+        outputHelpWithSplashMock.mockImplementation(() => {});
+
+        // Act
+        await expect(main(["node", "x.mjs"])).rejects.toThrow(
+            "process.exit called",
+        );
+
+        // Assert
+        expect(process.exit).toHaveBeenCalledWith(1);
+    });
+
+    it("should display help content when required input is missing", async () => {
+        // Arrange
+        outputHelpWithSplashMock.mockImplementation(() => {});
+
+        // Act
+        await expect(main(["node", "x.mjs"])).rejects.toThrow(
+            "process.exit called",
+        );
+
+        // Assert
+        expect(outputHelpWithSplashMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("should include a validation message when required input is missing", async () => {
+        // Arrange
+        outputHelpWithSplashMock.mockImplementation(() => {});
+
+        // Act
+        await expect(main(["node", "x.mjs"])).rejects.toThrow(
+            "process.exit called",
+        );
+
+        // Assert
+        expect(outputHelpWithSplashMock.mock.calls[0]?.[1]).toBeTruthy();
     });
 
     it("should show the corrected command with positionals before -- in the tip", async () => {

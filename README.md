@@ -1,4 +1,4 @@
-<picture title="Project workmark">
+<picture title="Project wordmark">
    <source media="(prefers-color-scheme: dark)" srcset="./assets/wordmark-dark.png" />
    <img alt="Project wordmark" src="./assets/wordmark-light.png"/>
 </picture>

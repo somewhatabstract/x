@@ -1,6 +1,7 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
 import {main} from "../bin/x";
 import {HandledError} from "../errors";
+import {getCompletions} from "../get-completions";
 import {listImpl} from "../list-impl";
 import {outputHelpWithSplash} from "../output-help-with-splash";
 import {xImpl} from "../x-impl";
@@ -11,15 +12,19 @@ vi.mock("../list-impl");
 
 vi.mock("../output-help-with-splash");
 
+vi.mock("../get-completions");
+
 describe("bin/x", () => {
     const xImplMock = vi.mocked(xImpl);
     const listImplMock = vi.mocked(listImpl);
     const outputHelpWithSplashMock = vi.mocked(outputHelpWithSplash);
+    const getCompletionsMock = vi.mocked(getCompletions);
 
     beforeEach(() => {
         xImplMock.mockReset();
         listImplMock.mockReset();
         outputHelpWithSplashMock.mockReset();
+        getCompletionsMock.mockReset();
         vi.spyOn(console, "error").mockImplementation(() => {});
         vi.spyOn(console, "warn").mockImplementation(() => {});
         vi.spyOn(process, "exit").mockImplementation((() => {
@@ -430,5 +435,47 @@ describe("bin/x", () => {
         await expect(main(["node", "x.mjs", "--list"])).rejects.toThrow(
             handledError,
         );
+    });
+
+    it("should return exitCode 0 when --get-yargs-completions is passed", async () => {
+        // Arrange
+        getCompletionsMock.mockResolvedValue([]);
+        vi.spyOn(console, "log").mockImplementation(() => {});
+
+        // Act
+        const result = await main([
+            "node",
+            "x.mjs",
+            "--get-yargs-completions",
+            "",
+        ]);
+
+        // Assert
+        expect(result).toEqual({exitCode: 0});
+    });
+
+    it("should print each completion on its own line when --get-yargs-completions is passed", async () => {
+        // Arrange
+        getCompletionsMock.mockResolvedValue(["script-a", "script-b"]);
+        vi.spyOn(console, "log").mockImplementation(() => {});
+
+        // Act
+        await main(["node", "x.mjs", "--get-yargs-completions", ""]);
+
+        // Assert
+        expect(console.log).toHaveBeenCalledWith("script-a");
+        expect(console.log).toHaveBeenCalledWith("script-b");
+    });
+
+    it("should not execute a script when --get-yargs-completions is passed", async () => {
+        // Arrange
+        getCompletionsMock.mockResolvedValue([]);
+        vi.spyOn(console, "log").mockImplementation(() => {});
+
+        // Act
+        await main(["node", "x.mjs", "--get-yargs-completions", ""]);
+
+        // Assert
+        expect(xImplMock).not.toHaveBeenCalled();
     });
 });

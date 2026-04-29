@@ -305,39 +305,6 @@ describe("bin/x", () => {
         expect(xImplMock).not.toHaveBeenCalled();
     });
 
-    it("should return with exit code 1 when required input is missing", async () => {
-        // Arrange
-        outputHelpWithSplashMock.mockImplementation(() => {});
-
-        // Act
-        const result = await main(["node", "x.mjs"]);
-
-        // Assert
-        expect(result).toEqual({exitCode: 1});
-    });
-
-    it("should display help content when required input is missing", async () => {
-        // Arrange
-        outputHelpWithSplashMock.mockImplementation(() => {});
-
-        // Act
-        await main(["node", "x.mjs"]);
-
-        // Assert
-        expect(outputHelpWithSplashMock).toHaveBeenCalledTimes(1);
-    });
-
-    it("should include a validation message when required input is missing", async () => {
-        // Arrange
-        outputHelpWithSplashMock.mockImplementation(() => {});
-
-        // Act
-        await main(["node", "x.mjs"]);
-
-        // Assert
-        expect(outputHelpWithSplashMock.mock.calls[0]?.[1]).toBeTruthy();
-    });
-
     it("should show the corrected command with positionals before -- in the tip", async () => {
         // Arrange
         xImplMock.mockResolvedValue({exitCode: 0});

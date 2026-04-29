@@ -1,4 +1,5 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
+import {HandledError} from "../errors";
 
 // Shared mutable state for the yargs mock - set per test before calling main()
 const state = vi.hoisted(() => ({
@@ -467,6 +468,16 @@ describe("bin/x", () => {
 
         // Assert
         await expect(main()).rejects.toThrow(unexpectedError);
+    });
+
+    it("should propagate HandledError thrown during listing", async () => {
+        // Arrange
+        const handledError = new HandledError("No packages found");
+        vi.mocked(listImpl).mockRejectedValue(handledError);
+        state.parsedArgs = {list: "", json: false, _: [], "dry-run": false};
+
+        // Assert
+        await expect(main()).rejects.toThrow(handledError);
     });
 
     it("should exit with 1 when no script name is provided", async () => {

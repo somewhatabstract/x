@@ -2,7 +2,7 @@ import * as path from "node:path";
 import {discoverPackages} from "./discover-packages";
 import {HandledError} from "./errors";
 import {findWorkspaceRoot} from "./find-workspace-root";
-import {type PackageBinInfo, listAllBins} from "./list-bins";
+import {listAllBins, type PackageBinInfo} from "./list-bins";
 
 export type ListMode = "names-only" | "full";
 

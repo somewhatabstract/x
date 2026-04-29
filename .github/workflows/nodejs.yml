@@ -4,7 +4,7 @@ on:
   pull_request:
     # ready_for_review is useful for when a PR is converted from "draft" to "not
     # draft".
-    types: [edited, opened, synchronize, ready_for_review, reopened]
+    types: [ edited, opened, synchronize, ready_for_review, reopened ]
 
   push:
     branches:
@@ -18,8 +18,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        node-version: [20.x]
+        os: [ ubuntu-latest ]
+        node-version: [ 24.x ]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
@@ -30,7 +30,7 @@ jobs:
           package_json_file: "package.json"
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version: ${{ matrix.node-version }}
           cache: "pnpm"
@@ -62,8 +62,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        node-version: [20.x]
+        os: [ ubuntu-latest ]
+        node-version: [ 24.x ]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
@@ -74,7 +74,7 @@ jobs:
           package_json_file: "package.json"
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version: ${{ matrix.node-version }}
           cache: "pnpm"
@@ -87,20 +87,20 @@ jobs:
       - name: Run tests with coverage
         run: pnpm coverage
       - name: Upload coverage
-        uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad
+        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   build:
-    needs: [coverage, lint]
+    needs: [ coverage, lint ]
     name: Build
     env:
       CI: true
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        node-version: [20.x]
+        os: [ ubuntu-latest ]
+        node-version: [ 24.x ]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
@@ -111,7 +111,7 @@ jobs:
           package_json_file: "package.json"
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version: ${{ matrix.node-version }}
           cache: "pnpm"

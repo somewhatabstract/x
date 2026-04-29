@@ -4,12 +4,12 @@ import yargs from "yargs";
 import {hideBin} from "yargs/helpers";
 import {HandledError} from "../errors";
 import {listImpl} from "../list-impl";
-import {xImpl} from "../x-impl";
+import {outputHelpWithSplash} from "../output-help-with-splash";
+import {type XResult, xImpl} from "../x-impl";
 
-export async function main(): Promise<void> {
-    const rawArgs = hideBin(process.argv);
-
-    const argv = yargs(rawArgs)
+export async function main(rawArgv: string[]): Promise<XResult> {
+    const rawArgs = hideBin(rawArgv);
+    const yi = yargs(rawArgs)
         .usage("Usage: $0 <script-name> [...args]")
         .command(
             "$0 [script-name]",
@@ -50,8 +50,17 @@ export async function main(): Promise<void> {
             }
             return true;
         })
-        .help()
-        .alias("help", "h")
+        .help(false)
+        .option("help", {
+            alias: "h",
+            type: "boolean",
+            describe: "Show help",
+            default: false,
+        })
+        .fail((msg, _err, yargs) => {
+            outputHelpWithSplash(yargs, msg);
+            process.exit(1);
+        })
         .version()
         .alias("version", "v")
         .example(
@@ -68,21 +77,22 @@ export async function main(): Promise<void> {
             "List available bin scripts grouped by package",
         )
         .example("$0 --list --json", "List commands as JSON")
-        .parserConfiguration({"unknown-options-as-args": true})
-        .parseSync();
+        .parserConfiguration({"unknown-options-as-args": true});
+
+    const argv = await yi.parse();
+
+    if (argv.help || argv.h) {
+        outputHelpWithSplash(yi);
+        return {exitCode: 0};
+    }
 
     // Check if we are in list mode
     const listArg = argv.list;
     if (listArg !== undefined) {
         const mode = listArg === "full" ? "full" : "names-only";
         const json = !!argv.json;
-        const result = await listImpl({mode, json});
-        process.exit(result.exitCode);
-        return;
+        return await listImpl({mode, json});
     }
-
-    // Extract script name and args
-    const scriptName = argv["script-name"] as string;
 
     const args = (argv._ as string[]) || [];
     const options = {
@@ -91,6 +101,7 @@ export async function main(): Promise<void> {
 
     // If any args look like flags and -- was not used, warn the user and suggest
     // using -- to explicitly separate flag arguments from x's own options.
+    const scriptName = (argv["script-name"] as string).trim();
     if (!rawArgs.includes("--")) {
         const flagLikeArgs = args.filter(
             (arg) => typeof arg === "string" && arg.startsWith("-"),
@@ -103,21 +114,24 @@ export async function main(): Promise<void> {
         }
     }
 
-    const result = await xImpl(scriptName, args, options);
-    process.exit(result.exitCode);
-    return;
+    // Run the implementation and exit with the appropriate code
+    return xImpl(scriptName, args, options);
 }
 
-// Only execute when this file is the entry point, not when imported.
+// Only run main if we aren't being imported as a module.
+/* v8 ignore start -- runtime-only CLI bootstrap */
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-    try {
-        await main();
-    } catch (error) {
-        if (error instanceof HandledError) {
-            console.error(`Error: ${error.message}`);
-        } else {
-            console.error("Unexpected error:", error);
-        }
-        process.exit(1);
-    }
+    main(process.argv)
+        .then((result) => {
+            process.exit(result.exitCode);
+        })
+        .catch((error) => {
+            if (error instanceof HandledError) {
+                console.error(`Error: ${error.message}`);
+            } else {
+                console.error("Unexpected error:", error);
+            }
+            process.exit(1);
+        });
 }
+/* v8 ignore stop -- runtime-only CLI bootstrap */

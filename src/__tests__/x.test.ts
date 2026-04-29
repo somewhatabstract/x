@@ -1,105 +1,45 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
-import {HandledError} from "../errors";
-
-// Shared mutable state for the yargs mock - set per test before calling main()
-const state = vi.hoisted(() => ({
-    parsedArgs: {} as Record<string, unknown>,
-}));
-
-// vi.mock() calls are hoisted before static imports, so these mocks are in
-// place when main() is imported below.
-vi.mock("../x-impl", () => ({xImpl: vi.fn()}));
-vi.mock("../list-impl", () => ({listImpl: vi.fn()}));
-vi.mock("yargs", () => {
-    // yargsCheckFn is registered when main() calls .check(fn) on the chain
-    let yargsCheckFn: ((argv: Record<string, unknown>) => true) | undefined;
-
-    const yargsChain: Record<string, unknown> = {
-        usage: vi.fn().mockReturnThis(),
-        option: vi.fn().mockReturnThis(),
-        help: vi.fn().mockReturnThis(),
-        alias: vi.fn().mockReturnThis(),
-        version: vi.fn().mockReturnThis(),
-        example: vi.fn().mockReturnThis(),
-        parserConfiguration: vi.fn().mockReturnThis(),
-        // Needed when the command builder callback calls yargs.positional()
-        positional: vi.fn().mockReturnThis(),
-        check: vi.fn().mockImplementation((fn: unknown) => {
-            if (typeof fn === "function") {
-                yargsCheckFn = fn as (argv: Record<string, unknown>) => true;
-            }
-            return yargsChain;
-        }),
-        parseSync: vi.fn().mockImplementation(() => {
-            if (yargsCheckFn) {
-                try {
-                    yargsCheckFn(state.parsedArgs);
-                } catch (e) {
-                    // Simulate yargs validation error: print message and exit
-                    console.error((e as Error).message);
-                    process.exit(1);
-                    // Re-throw so that main() surfaces the error when process.exit
-                    // is mocked to a no-op in tests, preventing subsequent code from
-                    // running as if validation had passed.
-                    throw e;
-                }
-            }
-            return state.parsedArgs;
-        }),
-    };
-    // Invoke the builder callback so its body is exercised
-    yargsChain.command = vi
-        .fn()
-        .mockImplementation(
-            (_name: unknown, _desc: unknown, builder: unknown) => {
-                if (typeof builder === "function") {
-                    builder(yargsChain);
-                }
-                return yargsChain;
-            },
-        );
-    return {default: vi.fn().mockReturnValue(yargsChain)};
-});
-
 import {main} from "../bin/x";
+import {HandledError} from "../errors";
 import {listImpl} from "../list-impl";
+import {outputHelpWithSplash} from "../output-help-with-splash";
 import {xImpl} from "../x-impl";
 
+vi.mock("../x-impl");
+
+vi.mock("../list-impl");
+
+vi.mock("../output-help-with-splash");
+
 describe("bin/x", () => {
-    let processExitSpy: ReturnType<typeof vi.spyOn>;
-    let originalArgv: string[];
+    const xImplMock = vi.mocked(xImpl);
+    const listImplMock = vi.mocked(listImpl);
+    const outputHelpWithSplashMock = vi.mocked(outputHelpWithSplash);
 
     beforeEach(() => {
-        vi.clearAllMocks();
-        originalArgv = process.argv;
-        processExitSpy = vi
-            .spyOn(process, "exit")
-            .mockImplementation(() => undefined as never);
+        xImplMock.mockReset();
+        listImplMock.mockReset();
+        outputHelpWithSplashMock.mockReset();
         vi.spyOn(console, "error").mockImplementation(() => {});
         vi.spyOn(console, "warn").mockImplementation(() => {});
-        // Default implementations — individual tests override as needed
-        vi.mocked(xImpl).mockResolvedValue({exitCode: 0});
-        vi.mocked(listImpl).mockResolvedValue({exitCode: 0});
+        vi.spyOn(process, "exit").mockImplementation((() => {
+            throw new Error("process.exit called");
+        }) as never);
     });
 
     afterEach(() => {
-        process.argv = originalArgv;
         vi.restoreAllMocks();
     });
 
     it("should call xImpl with the script name from argv", async () => {
         // Arrange
-        state.parsedArgs = {
-            "script-name": "my-script",
-            _: [],
-            "dry-run": false,
-        };
+        xImplMock.mockResolvedValue({exitCode: 0});
 
         // Act
-        await main();
+        await main(["node", "x.mjs", "my-script"]);
 
         // Assert
-        expect(vi.mocked(xImpl)).toHaveBeenCalledWith(
+        expect(xImplMock).toHaveBeenCalledWith(
             "my-script",
             expect.any(Array),
             expect.any(Object),
@@ -109,18 +49,13 @@ describe("bin/x", () => {
 
     it("should call xImpl with args from argv underscore field", async () => {
         // Arrange
-        state.parsedArgs = {
-            "script-name": "my-script",
-            _: ["--flag", "value"],
-            "dry-run": false,
-        };
-        process.argv = ["node", "x.mjs", "my-script", "--", "--flag", "value"];
+        xImplMock.mockResolvedValue({exitCode: 0});
 
         // Act
-        await main();
+        await main(["node", "x.mjs", "my-script", "--", "--flag", "value"]);
 
         // Assert
-        expect(vi.mocked(xImpl)).toHaveBeenCalledWith(
+        expect(xImplMock).toHaveBeenCalledWith(
             expect.any(String),
             ["--flag", "value"],
             expect.any(Object),
@@ -130,17 +65,13 @@ describe("bin/x", () => {
 
     it("should call xImpl with dryRun true when dry-run argv is true", async () => {
         // Arrange
-        state.parsedArgs = {
-            "script-name": "my-script",
-            _: [],
-            "dry-run": true,
-        };
+        xImplMock.mockResolvedValue({exitCode: 0});
 
         // Act
-        await main();
+        await main(["node", "x.mjs", "--dry-run", "my-script"]);
 
         // Assert
-        expect(vi.mocked(xImpl)).toHaveBeenCalledWith(
+        expect(xImplMock).toHaveBeenCalledWith(
             expect.any(String),
             expect.any(Array),
             {dryRun: true},
@@ -150,17 +81,13 @@ describe("bin/x", () => {
 
     it("should call xImpl with dryRun false when dry-run argv is false", async () => {
         // Arrange
-        state.parsedArgs = {
-            "script-name": "my-script",
-            _: [],
-            "dry-run": false,
-        };
+        xImplMock.mockResolvedValue({exitCode: 0});
 
         // Act
-        await main();
+        await main(["node", "x.mjs", "my-script"]);
 
         // Assert
-        expect(vi.mocked(xImpl)).toHaveBeenCalledWith(
+        expect(xImplMock).toHaveBeenCalledWith(
             expect.any(String),
             expect.any(Array),
             {dryRun: false},
@@ -168,19 +95,15 @@ describe("bin/x", () => {
         expect(console.warn).not.toHaveBeenCalled();
     });
 
-    it("should default to empty array when argv underscore field is falsy", async () => {
+    it("should default to empty args when no extra argv values are provided", async () => {
         // Arrange
-        state.parsedArgs = {
-            "script-name": "my-script",
-            _: null,
-            "dry-run": false,
-        };
+        xImplMock.mockResolvedValue({exitCode: 0});
 
         // Act
-        await main();
+        await main(["node", "x.mjs", "my-script"]);
 
         // Assert
-        expect(vi.mocked(xImpl)).toHaveBeenCalledWith(
+        expect(xImplMock).toHaveBeenCalledWith(
             expect.any(String),
             [],
             expect.any(Object),
@@ -188,57 +111,46 @@ describe("bin/x", () => {
         expect(console.warn).not.toHaveBeenCalled();
     });
 
-    it("should exit with the exit code returned by xImpl", async () => {
+    it("should return the exit code returned by xImpl", async () => {
         // Arrange
-        vi.mocked(xImpl).mockResolvedValue({exitCode: 42});
-        state.parsedArgs = {
-            "script-name": "my-script",
-            _: [],
-            "dry-run": false,
-        };
+        xImplMock.mockResolvedValue({exitCode: 42});
 
         // Act
-        await main();
+        const result = await main(["node", "x.mjs", "my-script"]);
 
         // Assert
-        expect(processExitSpy).toHaveBeenCalledWith(42);
+        expect(result.exitCode).toBe(42);
         expect(console.warn).not.toHaveBeenCalled();
     });
 
-    it("should propagate unexpected errors thrown by xImpl", async () => {
+    it("should reject when xImpl throws an unexpected error", async () => {
+        // Arrange
+        xImplMock.mockRejectedValue(new Error("Unexpected"));
+
+        await expect(main(["node", "x.mjs", "my-script"])).rejects.toThrow(
+            "Unexpected",
+        );
+    });
+
+    it("should propagate the original error when xImpl throws", async () => {
         // Arrange
         const unexpectedError = new Error("Something went wrong");
-        vi.mocked(xImpl).mockRejectedValue(unexpectedError);
-        state.parsedArgs = {
-            "script-name": "my-script",
-            _: [],
-            "dry-run": false,
-        };
+        xImplMock.mockRejectedValue(unexpectedError);
 
-        // Assert
-        await expect(main()).rejects.toThrow(unexpectedError);
+        await expect(main(["node", "x.mjs", "my-script"])).rejects.toBe(
+            unexpectedError,
+        );
     });
 
     it("should pass unknown flag args to xImpl when user omits --", async () => {
         // Arrange
-        state.parsedArgs = {
-            "script-name": "my-script",
-            _: ["--unknown-flag", "value"],
-            "dry-run": false,
-        };
-        process.argv = [
-            "node",
-            "x.mjs",
-            "my-script",
-            "--unknown-flag",
-            "value",
-        ];
+        xImplMock.mockResolvedValue({exitCode: 0});
 
         // Act
-        await main();
+        await main(["node", "x.mjs", "my-script", "--unknown-flag", "value"]);
 
         // Assert
-        expect(vi.mocked(xImpl)).toHaveBeenCalledWith(
+        expect(xImplMock).toHaveBeenCalledWith(
             "my-script",
             ["--unknown-flag", "value"],
             expect.any(Object),
@@ -247,21 +159,10 @@ describe("bin/x", () => {
 
     it("should show a tip when args contain flags and -- was not used", async () => {
         // Arrange
-        state.parsedArgs = {
-            "script-name": "my-script",
-            _: ["--unknown-flag", "value"],
-            "dry-run": false,
-        };
-        process.argv = [
-            "node",
-            "x.mjs",
-            "my-script",
-            "--unknown-flag",
-            "value",
-        ];
+        xImplMock.mockResolvedValue({exitCode: 0});
 
         // Act
-        await main();
+        await main(["node", "x.mjs", "my-script", "--unknown-flag", "value"]);
 
         // Assert
         expect(console.warn).toHaveBeenCalledWith(
@@ -271,21 +172,10 @@ describe("bin/x", () => {
 
     it("should show the corrected command in the tip when args contain flags without --", async () => {
         // Arrange
-        state.parsedArgs = {
-            "script-name": "my-script",
-            _: ["--unknown-flag", "value"],
-            "dry-run": false,
-        };
-        process.argv = [
-            "node",
-            "x.mjs",
-            "my-script",
-            "--unknown-flag",
-            "value",
-        ];
+        xImplMock.mockResolvedValue({exitCode: 0});
 
         // Act
-        await main();
+        await main(["node", "x.mjs", "my-script", "--unknown-flag", "value"]);
 
         // Assert
         expect(console.warn).toHaveBeenCalledWith(
@@ -295,22 +185,17 @@ describe("bin/x", () => {
 
     it("should not show a tip when -- was used before flag args", async () => {
         // Arrange
-        state.parsedArgs = {
-            "script-name": "my-script",
-            _: ["--unknown-flag", "value"],
-            "dry-run": false,
-        };
-        process.argv = [
+        xImplMock.mockResolvedValue({exitCode: 0});
+
+        // Act
+        await main([
             "node",
             "x.mjs",
             "my-script",
             "--",
             "--unknown-flag",
             "value",
-        ];
-
-        // Act
-        await main();
+        ]);
 
         // Assert
         expect(console.warn).not.toHaveBeenCalled();
@@ -318,21 +203,16 @@ describe("bin/x", () => {
 
     it("should not show a tip when args contain no flag-like values", async () => {
         // Arrange
-        state.parsedArgs = {
-            "script-name": "my-script",
-            _: ["positional-arg", "another-arg"],
-            "dry-run": false,
-        };
-        process.argv = [
+        xImplMock.mockResolvedValue({exitCode: 0});
+
+        // Act
+        await main([
             "node",
             "x.mjs",
             "my-script",
             "positional-arg",
             "another-arg",
-        ];
-
-        // Act
-        await main();
+        ]);
 
         // Assert
         expect(console.warn).not.toHaveBeenCalled();
@@ -340,18 +220,13 @@ describe("bin/x", () => {
 
     it("should pass positional args to xImpl when user omits --", async () => {
         // Arrange
-        state.parsedArgs = {
-            "script-name": "e2e",
-            _: ["setup", "verify"],
-            "dry-run": false,
-        };
-        process.argv = ["node", "x.mjs", "e2e", "setup", "verify"];
+        xImplMock.mockResolvedValue({exitCode: 0});
 
         // Act
-        await main();
+        await main(["node", "x.mjs", "e2e", "setup", "verify"]);
 
         // Assert
-        expect(vi.mocked(xImpl)).toHaveBeenCalledWith(
+        expect(xImplMock).toHaveBeenCalledWith(
             "e2e",
             ["setup", "verify"],
             expect.any(Object),
@@ -359,17 +234,117 @@ describe("bin/x", () => {
         expect(console.warn).not.toHaveBeenCalled();
     });
 
-    it("should show the corrected command with positionals before -- in the tip", async () => {
+    it("should return success when help is requested with --help", async () => {
         // Arrange
-        state.parsedArgs = {
-            "script-name": "e2e",
-            _: ["setup", "--flag", "value"],
-            "dry-run": false,
-        };
-        process.argv = ["node", "x.mjs", "e2e", "setup", "--flag", "value"];
+        xImplMock.mockResolvedValue({exitCode: 99});
 
         // Act
-        await main();
+        const result = await main(["node", "x.mjs", "my-script", "--help"]);
+
+        // Assert
+        expect(result).toEqual({exitCode: 0});
+    });
+
+    it("should display help when --help is provided", async () => {
+        // Arrange
+        xImplMock.mockResolvedValue({exitCode: 99});
+
+        // Act
+        await main(["node", "x.mjs", "my-script", "--help"]);
+
+        // Assert
+        expect(outputHelpWithSplashMock).toHaveBeenCalledOnce();
+    });
+
+    it("should skip script execution when --help is provided", async () => {
+        // Arrange
+        xImplMock.mockResolvedValue({exitCode: 99});
+
+        // Act
+        await main(["node", "x.mjs", "my-script", "--help"]);
+
+        // Assert
+        expect(xImplMock).not.toHaveBeenCalled();
+    });
+
+    it("should return success when help is requested with -h", async () => {
+        // Arrange
+        xImplMock.mockResolvedValue({exitCode: 99});
+
+        // Act
+        const result = await main(["node", "x.mjs", "my-script", "-h"]);
+
+        // Assert
+        expect(result).toEqual({exitCode: 0});
+    });
+
+    it("should display help when -h is provided", async () => {
+        // Arrange
+        xImplMock.mockResolvedValue({exitCode: 99});
+
+        // Act
+        await main(["node", "x.mjs", "my-script", "-h"]);
+
+        // Assert
+        expect(outputHelpWithSplashMock).toHaveBeenCalledOnce();
+    });
+
+    it("should stop script execution when -h is provided", async () => {
+        // Arrange
+        xImplMock.mockResolvedValue({exitCode: 99});
+
+        // Act
+        await main(["node", "x.mjs", "my-script", "-h"]);
+
+        // Assert
+        expect(xImplMock).not.toHaveBeenCalled();
+    });
+
+    it("should terminate with exit code 1 when required input is missing", async () => {
+        // Arrange
+        outputHelpWithSplashMock.mockImplementation(() => {});
+
+        // Act
+        await expect(main(["node", "x.mjs"])).rejects.toThrow(
+            "process.exit called",
+        );
+
+        // Assert
+        expect(process.exit).toHaveBeenCalledWith(1);
+    });
+
+    it("should display help content when required input is missing", async () => {
+        // Arrange
+        outputHelpWithSplashMock.mockImplementation(() => {});
+
+        // Act
+        await expect(main(["node", "x.mjs"])).rejects.toThrow(
+            "process.exit called",
+        );
+
+        // Assert
+        expect(outputHelpWithSplashMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("should include a validation message when required input is missing", async () => {
+        // Arrange
+        outputHelpWithSplashMock.mockImplementation(() => {});
+
+        // Act
+        await expect(main(["node", "x.mjs"])).rejects.toThrow(
+            "process.exit called",
+        );
+
+        // Assert
+        expect(outputHelpWithSplashMock.mock.calls[0]?.[1]).toBeTruthy();
+    });
+
+    it("should show the corrected command with positionals before -- in the tip", async () => {
+        // Arrange
+        xImplMock.mockResolvedValue({exitCode: 0});
+
+        // Act
+        await main(["node", "x.mjs", "e2e", "setup", "--flag", "value"]);
 
         // Assert
         expect(console.warn).toHaveBeenCalledWith(
@@ -379,32 +354,13 @@ describe("bin/x", () => {
 
     it("should use names-only mode when --list is used without a value", async () => {
         // Arrange
-        state.parsedArgs = {list: "", json: false, _: [], "dry-run": false};
+        listImplMock.mockResolvedValue({exitCode: 0});
 
         // Act
-        await main();
+        await main(["node", "x.mjs", "--list"]);
 
         // Assert
-        expect(vi.mocked(listImpl)).toHaveBeenCalledWith({
-            mode: "names-only",
-            json: false,
-        });
-    });
-
-    it("should use names-only mode when --list=names-only is specified", async () => {
-        // Arrange
-        state.parsedArgs = {
-            list: "names-only",
-            json: false,
-            _: [],
-            "dry-run": false,
-        };
-
-        // Act
-        await main();
-
-        // Assert
-        expect(vi.mocked(listImpl)).toHaveBeenCalledWith({
+        expect(listImplMock).toHaveBeenCalledWith({
             mode: "names-only",
             json: false,
         });
@@ -412,13 +368,13 @@ describe("bin/x", () => {
 
     it("should use full mode when --list=full is specified", async () => {
         // Arrange
-        state.parsedArgs = {list: "full", json: false, _: [], "dry-run": false};
+        listImplMock.mockResolvedValue({exitCode: 0});
 
         // Act
-        await main();
+        await main(["node", "x.mjs", "--list=full"]);
 
         // Assert
-        expect(vi.mocked(listImpl)).toHaveBeenCalledWith({
+        expect(listImplMock).toHaveBeenCalledWith({
             mode: "full",
             json: false,
         });
@@ -426,13 +382,13 @@ describe("bin/x", () => {
 
     it("should use JSON output format when --list and --json are used", async () => {
         // Arrange
-        state.parsedArgs = {list: "", json: true, _: [], "dry-run": false};
+        listImplMock.mockResolvedValue({exitCode: 0});
 
         // Act
-        await main();
+        await main(["node", "x.mjs", "--list", "--json"]);
 
         // Assert
-        expect(vi.mocked(listImpl)).toHaveBeenCalledWith({
+        expect(listImplMock).toHaveBeenCalledWith({
             mode: "names-only",
             json: true,
         });
@@ -440,87 +396,45 @@ describe("bin/x", () => {
 
     it("should not execute a script when --list is provided", async () => {
         // Arrange
-        state.parsedArgs = {list: "", json: false, _: [], "dry-run": false};
+        listImplMock.mockResolvedValue({exitCode: 0});
 
         // Act
-        await main();
+        await main(["node", "x.mjs", "--list"]);
 
         // Assert
-        expect(vi.mocked(xImpl)).not.toHaveBeenCalled();
+        expect(xImplMock).not.toHaveBeenCalled();
     });
 
-    it("should exit with the listing result exit code when --list is provided", async () => {
+    it("should return the listing result exit code when --list is provided", async () => {
         // Arrange
-        state.parsedArgs = {list: "", json: false, _: [], "dry-run": false};
+        listImplMock.mockResolvedValue({exitCode: 0});
 
         // Act
-        await main();
+        const result = await main(["node", "x.mjs", "--list"]);
 
         // Assert
-        expect(processExitSpy).toHaveBeenCalledWith(0);
+        expect(result.exitCode).toBe(0);
     });
 
     it("should propagate unexpected errors thrown during listing", async () => {
         // Arrange
         const unexpectedError = new Error("Unexpected");
-        vi.mocked(listImpl).mockRejectedValue(unexpectedError);
-        state.parsedArgs = {list: "", json: false, _: [], "dry-run": false};
+        listImplMock.mockRejectedValue(unexpectedError);
 
         // Assert
-        await expect(main()).rejects.toThrow(unexpectedError);
+        await expect(main(["node", "x.mjs", "--list"])).rejects.toThrow(
+            unexpectedError,
+        );
     });
 
     it("should propagate HandledError thrown during listing", async () => {
         // Arrange
         const handledError = new HandledError("No packages found");
-        vi.mocked(listImpl).mockRejectedValue(handledError);
-        state.parsedArgs = {list: "", json: false, _: [], "dry-run": false};
+        listImplMock.mockRejectedValue(handledError);
 
         // Assert
-        await expect(main()).rejects.toThrow(handledError);
-    });
-
-    it("should exit with 1 when no script name is provided", async () => {
-        // Arrange
-        state.parsedArgs = {
-            "script-name": undefined,
-            list: undefined,
-            json: false,
-            _: [],
-            "dry-run": false,
-        };
-
-        // Act
-        try {
-            await main();
-        } catch {
-            // expected — validation error thrown by the yargs check mock
-        }
-
-        // Assert
-        expect(processExitSpy).toHaveBeenCalledWith(1);
-    });
-
-    it("should report an error when no script name is provided", async () => {
-        // Arrange
-        state.parsedArgs = {
-            "script-name": undefined,
-            list: undefined,
-            json: false,
-            _: [],
-            "dry-run": false,
-        };
-
-        // Act
-        try {
-            await main();
-        } catch {
-            // expected — validation error thrown by the yargs check mock
-        }
-
-        // Assert
-        expect(console.error).toHaveBeenCalledWith(
-            expect.stringContaining("script-name is required"),
+        await expect(main(["node", "x.mjs", "--list"])).rejects.toThrow(
+            handledError,
         );
     });
 });

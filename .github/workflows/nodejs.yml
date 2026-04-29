@@ -4,7 +4,7 @@ on:
   pull_request:
     # ready_for_review is useful for when a PR is converted from "draft" to "not
     # draft".
-    types: [edited, opened, synchronize, ready_for_review, reopened]
+    types: [ edited, opened, synchronize, ready_for_review, reopened ]
 
   push:
     branches:
@@ -18,8 +18,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        node-version: [20.x]
+        os: [ ubuntu-latest ]
+        node-version: [ 24.x ]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
@@ -62,8 +62,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        node-version: [20.x]
+        os: [ ubuntu-latest ]
+        node-version: [ 24.x ]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
@@ -92,15 +92,15 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   build:
-    needs: [coverage, lint]
+    needs: [ coverage, lint ]
     name: Build
     env:
       CI: true
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        node-version: [20.x]
+        os: [ ubuntu-latest ]
+        node-version: [ 24.x ]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 

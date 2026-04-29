@@ -1,8 +1,11 @@
-# x
+<picture title="Project wordmark">
+   <source media="(prefers-color-scheme: dark)" srcset="./assets/wordmark-dark.png" />
+   <img alt="Project wordmark" src="./assets/wordmark-light.png"/>
+</picture>
 
-Execute any bin defined by any package within a monorepo without needing to install that package at the root.
+Easily execute bin scripts from monorepo packages without installing them at the root.
 
-## Overview
+# <picture title="X logo"><source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="./assets/logo-dark.png" /><source media="(prefers-reduced-motion: reduce)" srcset="./assets/logo-light.png" /><source media="(prefers-color-scheme: dark)" srcset="./assets/x-logo-dark.gif" /><img style="width: 32px; height: 32px;" alt="X tool logo" src="assets/x-logo-light.gif"/></picture>
 
 `x` is a tool for monorepos that allows you to execute binary scripts from any package in your workspace without installing them globally or in your current package. It automatically discovers all packages in your workspace and finds the matching bin script.
 

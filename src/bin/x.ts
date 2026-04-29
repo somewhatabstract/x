@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import {pathToFileURL} from "node:url";
+import {fileURLToPath} from "node:url";
 import yargs from "yargs";
 import {hideBin} from "yargs/helpers";
 import {outputHelpWithSplash} from "../output-help-with-splash";
@@ -80,7 +80,8 @@ export async function main(rawArgv: string[]): Promise<XResult> {
 }
 
 // Only run main if we aren't being imported as a module.
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+/* v8 ignore start -- runtime-only CLI bootstrap */
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
     main(process.argv)
         .then((result) => {
             process.exit(result.exitCode);
@@ -90,3 +91,4 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
             process.exit(1);
         });
 }
+/* v8 ignore stop -- runtime-only CLI bootstrap */

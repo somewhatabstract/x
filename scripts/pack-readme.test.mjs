@@ -11,6 +11,18 @@ import {describe, expect, it} from "vitest";
 
 const root = join(import.meta.dirname, "..");
 
+function containsHostInUrls(text, expectedHost) {
+    const urlMatches = text.match(/https?:\/\/[^\s)>\]'"`]+/g) ?? [];
+
+    return urlMatches.some((candidate) => {
+        try {
+            return new URL(candidate).hostname === expectedHost;
+        } catch {
+            return false;
+        }
+    });
+}
+
 describe("pack-readme", () => {
     it("should not leave a README backup file behind", () => {
         // Arrange
@@ -36,7 +48,7 @@ describe("pack-readme", () => {
 
         // Assert
         expect(
-            readme.includes("raw.githubusercontent.com"),
+            containsHostInUrls(readme, "raw.githubusercontent.com"),
             "README.md contains raw.githubusercontent.com URLs — the publish " +
                 "process may have been interrupted. Run: node scripts/pack-readme.mjs restore",
         ).toBe(false);

@@ -9,7 +9,7 @@ function restoreEnvVar(envName: string, value: string | undefined) {
     }
 }
 
-describe("generateSplash", () => {
+describe("useColor", () => {
     const FORCE_COLOR = process.env.FORCE_COLOR;
     const NO_COLOR = process.env.NO_COLOR;
     const isTTY = process.stdout.isTTY;

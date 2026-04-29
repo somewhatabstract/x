@@ -26,9 +26,14 @@ const README = "README.md";
 const mode = process.argv[2];
 
 if (mode === "rewrite") {
+    if (existsSync(BACKUP)) {
+        throw new Error(
+            `Backup file ${BACKUP} already exists. Make sure README is fresh from checkout before rewriting.`,
+        );
+    }
     copyFileSync(README, BACKUP);
     const content = readFileSync(README, "utf8");
-    // Replace both `./assets/` and bare `assets/` references in src/srcset attributes
+    // Replace both `./assets/` and bare `assets/` references
     const rewritten = content.replace(
         /(?:\.\/)?assets\//g,
         `${BASE_URL}assets/`,

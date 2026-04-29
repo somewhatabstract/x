@@ -1,11 +1,7 @@
-const useColor = process.env.NO_COLOR
-    ? false
-    : process.env.FORCE_COLOR
-      ? true
-      : process.stdout.isTTY === true;
+import {useColor} from "./use-color";
 
 const rgb = (r: number, g: number, b: number) => (s: string) =>
-    useColor ? `\x1b[38;2;${r};${g};${b}m${s}\x1b[0m` : s;
+    useColor() ? `\x1b[38;2;${r};${g};${b}m${s}\x1b[0m` : s;
 
 const pink = rgb(255, 45, 149); // #ff2d95
 const cyan = rgb(46, 230, 255); // #2ee6ff
@@ -16,8 +12,8 @@ const caret = ["██╗  ", "╚██╗ ", " ╚██╗", " ██╔╝",
 const ex = [
     "██╗  ██╗",
     "╚██╗██╔╝",
-    " ╚███╔╝ ",
-    " ██╔██╗ ",
+    " ╚███╔╝",
+    " ██╔██╗",
     "██╔╝ ██╗",
     "╚═╝  ╚═╝",
 ];

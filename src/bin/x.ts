@@ -6,6 +6,7 @@ import {HandledError} from "../errors";
 import {getCompletions} from "../get-completions";
 import {listImpl} from "../list-impl";
 import {outputHelpWithSplash} from "../output-help-with-splash";
+import {validateArgv} from "../validate-argv";
 import {type XResult, xImpl} from "../x-impl";
 
 export async function main(rawArgv: string[]): Promise<XResult> {
@@ -27,13 +28,12 @@ export async function main(rawArgv: string[]): Promise<XResult> {
         .command(
             "$0 [script-name]",
             "Execute a bin script from any package in the workspace",
-            (yargs) => {
-                return yargs.positional("script-name", {
+            (yargs) =>
+                yargs.positional("script-name", {
                     describe: "Name of the bin script to execute",
                     type: "string",
                     demandOption: false,
-                });
-            },
+                }),
         )
         .option("list", {
             alias: "l",
@@ -52,17 +52,7 @@ export async function main(rawArgv: string[]): Promise<XResult> {
             type: "boolean",
             default: false,
         })
-        .check((argv) => {
-            if (
-                argv.list === undefined &&
-                !(argv["script-name"] as string | undefined)?.trim()
-            ) {
-                throw new Error(
-                    "script-name is required. Use --list to see available commands.",
-                );
-            }
-            return true;
-        })
+        .check((argv) => validateArgv(argv))
         // We're handling help text ourselves so we can include the spash.
         .help(false)
         .option("help", {

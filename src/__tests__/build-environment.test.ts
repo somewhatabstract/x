@@ -13,19 +13,15 @@ describe("buildEnvironment", () => {
         vi.clearAllMocks();
     });
 
-    it("should preserve existing environment variables", async () => {
+    it("should pass through all existing environment variables so scripts see the full caller context", async () => {
         // Arrange
         const workspaceRoot = "/test/workspace";
         const currentEnv = {
             EXISTING_VAR: "existing-value",
             PATH: "/usr/bin:/bin",
         };
-
         vi.mocked(fs.readFile).mockResolvedValue(
-            JSON.stringify({
-                name: "test-workspace",
-                version: "1.0.0",
-            }),
+            JSON.stringify({name: "test-workspace"}),
         );
 
         // Act
@@ -35,17 +31,12 @@ describe("buildEnvironment", () => {
         expect(env.EXISTING_VAR).toBe("existing-value");
     });
 
-    it("should prepend workspace node_modules/.bin to PATH", async () => {
+    it("should make workspace executables available to scripts when the parent process has not already done so", async () => {
         // Arrange
         const workspaceRoot = "/test/workspace";
-        const currentEnv = {
-            PATH: "/usr/bin:/bin",
-        };
-
+        const currentEnv = {PATH: "/usr/bin:/bin"};
         vi.mocked(fs.readFile).mockResolvedValue(
-            JSON.stringify({
-                name: "test-workspace",
-            }),
+            JSON.stringify({name: "test-workspace"}),
         );
 
         // Act
@@ -56,11 +47,25 @@ describe("buildEnvironment", () => {
         expect(env.PATH).toContain(expectedPath);
     });
 
-    it("should set npm_command to exec", async () => {
+    it("should not duplicate the workspace bin path when the parent process already added it", async () => {
+        // Arrange
+        const workspaceRoot = "/test/workspace";
+        const workspaceBin = path.join(workspaceRoot, "node_modules", ".bin");
+        const currentEnv = {PATH: `${workspaceBin}:/usr/bin`};
+        vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({}));
+
+        // Act
+        const env = await buildEnvironment(workspaceRoot, currentEnv);
+
+        // Assert
+        const entries = (env.PATH ?? "").split(path.delimiter);
+        expect(entries.filter((e) => e === workspaceBin)).toHaveLength(1);
+    });
+
+    it("should signal to scripts that they are running under exec when no parent context exists", async () => {
         // Arrange
         const workspaceRoot = "/test/workspace";
         const currentEnv = {PATH: "/usr/bin"};
-
         vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({}));
 
         // Act
@@ -70,12 +75,23 @@ describe("buildEnvironment", () => {
         expect(env.npm_command).toBe("exec");
     });
 
-    it("should set INIT_CWD to current working directory", async () => {
+    it("should defer to the parent process npm command context rather than overriding it", async () => {
+        // Arrange
+        const currentEnv = {PATH: "/usr/bin", npm_command: "run"};
+        vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({}));
+
+        // Act
+        const env = await buildEnvironment("/test/workspace", currentEnv);
+
+        // Assert
+        expect(env.npm_command).toBe("run");
+    });
+
+    it("should tell scripts where they were originally invoked from when no parent context exists", async () => {
         // Arrange
         const workspaceRoot = "/test/workspace";
         const currentEnv = {PATH: "/usr/bin"};
         const expectedCwd = process.cwd();
-
         vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({}));
 
         // Act
@@ -85,49 +101,22 @@ describe("buildEnvironment", () => {
         expect(env.INIT_CWD).toBe(expectedCwd);
     });
 
-    it("should set npm_package_name from workspace package.json", async () => {
+    it("should preserve the invocation directory established by the parent process", async () => {
         // Arrange
-        const workspaceRoot = "/test/workspace";
-        const currentEnv = {PATH: "/usr/bin"};
-
-        vi.mocked(fs.readFile).mockResolvedValue(
-            JSON.stringify({
-                name: "my-workspace",
-                version: "2.5.0",
-            }),
-        );
+        const currentEnv = {PATH: "/usr/bin", INIT_CWD: "/some/project/subdir"};
+        vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({}));
 
         // Act
-        const env = await buildEnvironment(workspaceRoot, currentEnv);
+        const env = await buildEnvironment("/test/workspace", currentEnv);
 
         // Assert
-        expect(env.npm_package_name).toBe("my-workspace");
+        expect(env.INIT_CWD).toBe("/some/project/subdir");
     });
 
-    it("should set npm_package_version from workspace package.json", async () => {
+    it("should give scripts the path to the node executable so they can invoke node themselves", async () => {
         // Arrange
         const workspaceRoot = "/test/workspace";
         const currentEnv = {PATH: "/usr/bin"};
-
-        vi.mocked(fs.readFile).mockResolvedValue(
-            JSON.stringify({
-                name: "my-workspace",
-                version: "2.5.0",
-            }),
-        );
-
-        // Act
-        const env = await buildEnvironment(workspaceRoot, currentEnv);
-
-        // Assert
-        expect(env.npm_package_version).toBe("2.5.0");
-    });
-
-    it("should set npm_execpath to node executable path", async () => {
-        // Arrange
-        const workspaceRoot = "/test/workspace";
-        const currentEnv = {PATH: "/usr/bin"};
-
         vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({}));
 
         // Act
@@ -137,25 +126,23 @@ describe("buildEnvironment", () => {
         expect(env.npm_execpath).toBe(process.execPath);
     });
 
-    it("should include package name in npm_config_user_agent", async () => {
+    it("should always identify as x in the user agent so external tools know what invoked the script", async () => {
         // Arrange
         const workspaceRoot = "/test/workspace";
         const currentEnv = {PATH: "/usr/bin"};
-
         vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({}));
 
         // Act
         const env = await buildEnvironment(workspaceRoot, currentEnv);
 
         // Assert
-        expect(env.npm_config_user_agent).toContain("x/");
+        expect(env.npm_config_user_agent).toMatch(/^x\//);
     });
 
-    it("should include node version in npm_config_user_agent", async () => {
+    it("should always include the node version in the user agent for compatibility identification", async () => {
         // Arrange
         const workspaceRoot = "/test/workspace";
         const currentEnv = {PATH: "/usr/bin"};
-
         vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({}));
 
         // Act
@@ -165,43 +152,55 @@ describe("buildEnvironment", () => {
         expect(env.npm_config_user_agent).toContain("node/");
     });
 
-    it("should set npm_command to exec when package.json is missing", async () => {
+    it("should override a parent-provided user agent so scripts always see x as the invoking tool", async () => {
+        // Arrange
+        const currentEnv = {
+            PATH: "/usr/bin",
+            npm_config_user_agent: "pnpm/9.0.0 npm/? node/v20.0.0 darwin arm64",
+        };
+        vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({}));
+
+        // Act
+        const env = await buildEnvironment("/test/workspace", currentEnv);
+
+        // Assert
+        expect(env.npm_config_user_agent).toMatch(/^x\//);
+    });
+
+    it("should expose the workspace package name to scripts when the parent process has not done so", async () => {
         // Arrange
         const workspaceRoot = "/test/workspace";
         const currentEnv = {PATH: "/usr/bin"};
-
-        vi.mocked(fs.readFile).mockRejectedValue(
-            new Error("ENOENT: no such file"),
+        vi.mocked(fs.readFile).mockResolvedValue(
+            JSON.stringify({name: "my-workspace", version: "2.5.0"}),
         );
 
         // Act
         const env = await buildEnvironment(workspaceRoot, currentEnv);
 
         // Assert
-        expect(env.npm_command).toBe("exec");
+        expect(env.npm_package_name).toBe("my-workspace");
     });
 
-    it("should set INIT_CWD when package.json is missing", async () => {
+    it("should expose the workspace package version to scripts when the parent process has not done so", async () => {
         // Arrange
         const workspaceRoot = "/test/workspace";
         const currentEnv = {PATH: "/usr/bin"};
-
-        vi.mocked(fs.readFile).mockRejectedValue(
-            new Error("ENOENT: no such file"),
+        vi.mocked(fs.readFile).mockResolvedValue(
+            JSON.stringify({name: "my-workspace", version: "2.5.0"}),
         );
 
         // Act
         const env = await buildEnvironment(workspaceRoot, currentEnv);
 
         // Assert
-        expect(env.INIT_CWD).toBe(process.cwd());
+        expect(env.npm_package_version).toBe("2.5.0");
     });
 
-    it("should include npm_package_description if present", async () => {
+    it("should expose the workspace package description to scripts when present", async () => {
         // Arrange
         const workspaceRoot = "/test/workspace";
         const currentEnv = {PATH: "/usr/bin"};
-
         vi.mocked(fs.readFile).mockResolvedValue(
             JSON.stringify({
                 name: "my-workspace",
@@ -216,44 +215,12 @@ describe("buildEnvironment", () => {
         expect(env.npm_package_description).toBe("A test workspace");
     });
 
-    it("should convert object fields to JSON strings", async () => {
+    it("should expose the workspace package license to scripts when present", async () => {
         // Arrange
         const workspaceRoot = "/test/workspace";
         const currentEnv = {PATH: "/usr/bin"};
-
         vi.mocked(fs.readFile).mockResolvedValue(
-            JSON.stringify({
-                name: "my-workspace",
-                repository: {
-                    type: "git",
-                    url: "https://github.com/test/repo",
-                },
-            }),
-        );
-
-        // Act
-        const env = await buildEnvironment(workspaceRoot, currentEnv);
-
-        // Assert
-        expect(env.npm_package_repository).toBe(
-            JSON.stringify({
-                type: "git",
-                url: "https://github.com/test/repo",
-            }),
-        );
-    });
-
-    it("should set npm_package_license from workspace package.json", async () => {
-        // Arrange
-        const workspaceRoot = "/test/workspace";
-        const currentEnv = {PATH: "/usr/bin"};
-
-        vi.mocked(fs.readFile).mockResolvedValue(
-            JSON.stringify({
-                name: "my-workspace",
-                license: "MIT",
-                author: "John Doe",
-            }),
+            JSON.stringify({name: "my-workspace", license: "MIT"}),
         );
 
         // Act
@@ -263,17 +230,12 @@ describe("buildEnvironment", () => {
         expect(env.npm_package_license).toBe("MIT");
     });
 
-    it("should set npm_package_author from workspace package.json", async () => {
+    it("should expose the workspace package author to scripts when present", async () => {
         // Arrange
         const workspaceRoot = "/test/workspace";
         const currentEnv = {PATH: "/usr/bin"};
-
         vi.mocked(fs.readFile).mockResolvedValue(
-            JSON.stringify({
-                name: "my-workspace",
-                license: "MIT",
-                author: "John Doe",
-            }),
+            JSON.stringify({name: "my-workspace", author: "John Doe"}),
         );
 
         // Act
@@ -281,5 +243,68 @@ describe("buildEnvironment", () => {
 
         // Assert
         expect(env.npm_package_author).toBe("John Doe");
+    });
+
+    it("should serialize complex package fields to JSON strings so they are usable as environment variable values", async () => {
+        // Arrange
+        const workspaceRoot = "/test/workspace";
+        const currentEnv = {PATH: "/usr/bin"};
+        const repository = {type: "git", url: "https://github.com/test/repo"};
+        vi.mocked(fs.readFile).mockResolvedValue(
+            JSON.stringify({name: "my-workspace", repository}),
+        );
+
+        // Act
+        const env = await buildEnvironment(workspaceRoot, currentEnv);
+
+        // Assert
+        expect(env.npm_package_repository).toBe(JSON.stringify(repository));
+    });
+
+    it("should preserve package metadata set by the parent process rather than overwriting it from disk", async () => {
+        // Arrange
+        const currentEnv = {
+            PATH: "/usr/bin",
+            npm_package_name: "my-root-package",
+        };
+        vi.mocked(fs.readFile).mockResolvedValue(
+            JSON.stringify({name: "should-not-appear"}),
+        );
+
+        // Act
+        const env = await buildEnvironment("/test/workspace", currentEnv);
+
+        // Assert
+        expect(env.npm_package_name).toBe("my-root-package");
+    });
+
+    it("should still provide lifecycle variables even when the workspace package.json cannot be read", async () => {
+        // Arrange
+        const workspaceRoot = "/test/workspace";
+        const currentEnv = {PATH: "/usr/bin"};
+        vi.mocked(fs.readFile).mockRejectedValue(
+            new Error("ENOENT: no such file"),
+        );
+
+        // Act
+        const env = await buildEnvironment(workspaceRoot, currentEnv);
+
+        // Assert
+        expect(env.npm_command).toBe("exec");
+    });
+
+    it("should still expose the invocation directory even when the workspace package.json cannot be read", async () => {
+        // Arrange
+        const workspaceRoot = "/test/workspace";
+        const currentEnv = {PATH: "/usr/bin"};
+        vi.mocked(fs.readFile).mockRejectedValue(
+            new Error("ENOENT: no such file"),
+        );
+
+        // Act
+        const env = await buildEnvironment(workspaceRoot, currentEnv);
+
+        // Assert
+        expect(env.INIT_CWD).toBe(process.cwd());
     });
 });

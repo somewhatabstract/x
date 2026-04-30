@@ -1,5 +1,5 @@
 /**
- * Determine whether a command is typed in in the completion context.
+ * Determine whether a command is typed in the completion context.
  *
  * @param rawArgs The raw command line arguments passed to x, including the
  * "--get-yargs-completions" flag and any partial command the user has typed.

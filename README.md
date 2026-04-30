@@ -1,9 +1,6 @@
-<picture title="Project wordmark">
-   <source media="(prefers-color-scheme: dark)" srcset="./assets/wordmark-dark.png" />
-   <img alt="Project wordmark" src="./assets/wordmark-light.png"/>
-</picture>
+![Project wordmark](./assets/wordmark.png)
 
-Easily execute bin scripts from monorepo packages without installing them at the root.
+Execute bin scripts from monorepo packages without installing them at the root.
 
 # <picture title="X logo"><source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="./assets/logo-dark.png" /><source media="(prefers-reduced-motion: reduce)" srcset="./assets/logo-light.png" /><source media="(prefers-color-scheme: dark)" srcset="./assets/x-logo-dark.gif" /><img style="width: 32px; height: 32px;" alt="X tool logo" src="assets/x-logo-light.gif"/></picture>
 
@@ -11,14 +8,16 @@ Easily execute bin scripts from monorepo packages without installing them at the
 
 **Supports multiple package managers:**
 
-- 📦 npm workspaces
-- 🧶 Yarn (classic and modern)
-- 📌 pnpm workspaces
-- 🎯 Lerna
-- 🍞 Bun workspaces
-- 🚀 Rush
+- npm workspaces
+- Yarn (classic and modern)
+- pnpm workspaces
+- Lerna
+- Bun workspaces
+- Rush
 
 ## Installation
+
+Install `@somewhatabstract/x` globally, or as a dev dependency in your monorepo root package (you only need to install it once at the root of your workspace, not in each package).
 
 ```bash
 npm install -g @somewhatabstract/x
@@ -30,27 +29,52 @@ yarn global add @somewhatabstract/x
 
 ## Usage
 
+These examples omit the package manager execution prefix for brevity — in practice you'd run e.g. `pnpm x <script-name>`.
+
 ```bash
 # Execute a bin script from any package in the workspace
-pnpm x <script-name> [-- <args...>]
+x <script-name> [-- <args...>]
 
 # Preview what would be executed (dry-run mode)
-pnpm x --dry-run <script-name>
+x --dry-run <script-name>
 
 # Pass arguments to the script (use `--` when args might look like x's own options)
-pnpm x my-script -- --flag value
+x my-script -- --flag value
 ```
 
 This only executes bin scripts defined by packages in your workspace, not their dependencies. The bin must be an executable file with a shebang (on Unix-like systems) or a directly runnable file (on Windows), or a JS script that can be executed with Node.js.
 
 ## Features
 
-- 🔍 **Automatic Discovery**: Finds all packages in your monorepo workspace
-- 🚀 **No Installation Needed**: Execute bins from the root without needing to install your monorepo packages in the root package
+- 🔍 **Automatic Discovery**: Finds all packages in your monorepo workspace via @manypkg
 - 👁️ **Dry-Run Mode**: Preview what would be executed with `--dry-run`
-- 🔧 **Multi-Language Support**: Works with any executable script (Node.js, Bash, Python, etc.)
 - 📦 **Multi-Package-Manager**: Works with npm, Yarn, pnpm, Lerna, Bun, and Rush
-- ⚡ **Fast**: Efficient package discovery using @manypkg
+- ⌨️ **Auto-completion**: Shell autocompletion for available bin scripts
+
+### Auto-completion
+
+`x` can generate a shell completion script so you can tab-complete available bin scripts.
+
+If you have `x` installed globally, add this to your shell configuration file (e.g. `~/.bashrc`, `~/.zshrc`, etc.):
+
+```bash
+source <(x --completion)
+```
+
+Or, if you prefer to use `x` without installing it globally, you can add this to your shell configuration file:
+
+```bash
+source <(npx x --completion)
+```
+
+You can also write the completion script to a file and source it from there:
+
+```bash
+x --completion > ~/.x-completion.sh
+source ~/.x-completion.sh
+```
+
+If `x` is installed per-workspace rather than globally, source the completion script from the local installation instead.
 
 ## Development
 
@@ -60,6 +84,9 @@ pnpm install
 
 # Run tests
 pnpm test
+
+# Lint
+pnpm lint
 
 # Type check
 pnpm typecheck

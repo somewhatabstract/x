@@ -61,8 +61,6 @@ If you make changes that change snapshots, you may need to run tests with the `-
 
 Anyone can create a local build of the distributed code by running `pnpm build`.
 
-Running the build will execute tests first.
-
 ### Publishing
 
 Publishing is automated through our use of [changesets][1]. When a PR is merged to `main`, a release PR is created that bundles all the changes since the last release. When we are ready to release, this bundled PR is merged to `main` which triggers changesets to publish to npm via trusted publishing.

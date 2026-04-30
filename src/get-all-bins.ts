@@ -7,8 +7,7 @@ import {listAllBins, type PackageBinInfo} from "./list-bins";
  *
  * @returns An array of PackageBinInfo objects containing package name, path,
  * and bins
- * @throws {HandledError} If workspace root cannot be found or no packages are
- * found
+ * @throws {HandledError} If no packages are found
  */
 export async function getAllBins(
     workspaceRoot: string,

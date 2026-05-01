@@ -1,5 +1,11 @@
 # @somewhatabstract/x
 
+## 0.4.0
+
+### Minor Changes
+
+- 0ec1d59: Attempting to get tab completion right
+
 ## 0.3.1
 
 ### Patch Changes

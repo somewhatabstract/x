@@ -64,7 +64,7 @@ source <(x --completion)
 Or, if you prefer to use `x` without installing it globally, you can add this to your shell configuration file:
 
 ```bash
-source <(npx x --completion)
+source <(npx @somewhatabstract/x --completion)
 ```
 
 You can also write the completion script to a file and source it from there:

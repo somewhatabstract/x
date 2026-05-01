@@ -1,8 +1,7 @@
 import * as path from "node:path";
-import {discoverPackages} from "./discover-packages";
-import {HandledError} from "./errors";
 import {findWorkspaceRoot} from "./find-workspace-root";
-import {listAllBins, type PackageBinInfo} from "./list-bins";
+import {getAllBins} from "./get-all-bins";
+import type {PackageBinInfo} from "./list-bins";
 
 export type ListMode = "names-only" | "full";
 
@@ -70,15 +69,7 @@ function listFull(
  */
 export async function listImpl(options: ListOptions): Promise<ListResult> {
     const workspaceRoot = await findWorkspaceRoot();
-    const packages = await discoverPackages(workspaceRoot);
-
-    if (packages.length === 0) {
-        throw new HandledError(
-            "No packages found in workspace. Is this a valid monorepo?",
-        );
-    }
-
-    const packageBins = await listAllBins(packages);
+    const packageBins = await getAllBins(workspaceRoot);
 
     if (options.mode === "names-only") {
         listNamesOnly(packageBins, options.json);

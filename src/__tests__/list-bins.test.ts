@@ -238,4 +238,19 @@ describe("listAllBins", () => {
             expect.any(Error),
         );
     });
+
+    it("should not include a package when its bin field is not a string or object", async () => {
+        // Arrange
+        vi.mocked(fs.readFile).mockResolvedValue(
+            JSON.stringify({name: "my-pkg", bin: 42}),
+        );
+
+        // Act
+        const result = await listAllBins([
+            {name: "my-pkg", path: "/workspace/my-pkg", version: "1.0.0"},
+        ]);
+
+        // Assert
+        expect(result).toEqual([]);
+    });
 });

@@ -70,21 +70,22 @@ x my-script -- --flag value
 
 This only executes bin scripts defined by packages in your workspace, not bin scripts defined by their dependencies. The bin must be an executable file with a shebang (on Unix-like systems) or a directly runnable file (on Windows), or a JS script that can be executed with Node.js.
 
+> [!NOTE]
+> `x` must be installed (globally or locally) to be used. It cannot be used via `npx`, `pnpx`, etc. due to how those tools pass arguments which interferes with how `x` processes arguments. If you want to use `x` without installing it globally, install it as a dev dependency in your monorepo root package and run it via your package manager's exec command as shown above.
+
 ## Features
 
 - 🔍 **Automatic Discovery**: Finds all packages in your monorepo workspace via @manypkg
 - 👁️ **Dry-Run Mode**: Preview what would be executed with `--dry-run`
 - 📦 **Multi-Package-Manager**: Works with npm, Yarn, pnpm, Lerna, Bun, and Rush, mimicking the npm-like environment.
-- ⌨️ **Auto-completion**: Shell autocompletion for available bin scripts
+- ⌨️ **Tab completion**: Shell tab completion for available bin scripts
 
-### Auto-completion
+### Tab completion
 
-`@somewhatabstract/x` can generate a shell completion script so you can tab-complete available bin scripts.
-
-For example, with `@somewhatabstract/x` installed globally, use this to add tab completion to your current shell session:
+`@somewhatabstract/x` can generate a shell completion script so you can tab-complete available bin scripts. With `@somewhatabstract/x` installed globally, use this to add tab completion to your current shell session:
 
 ```bash
-source <(x --completion)
+. <(x --completion)
 ```
 
 ## Development

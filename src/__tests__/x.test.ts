@@ -445,4 +445,68 @@ describe("bin/x", () => {
         // Assert
         expect(xImplMock).not.toHaveBeenCalled();
     });
+
+    describe("completion script scriptName", () => {
+        const savedEnvUnderscore = process.env._;
+
+        beforeEach(() => {
+            vi.spyOn(console, "log").mockImplementation(() => {});
+        });
+
+        afterEach(() => {
+            if (savedEnvUnderscore === undefined) {
+                delete process.env._;
+            } else {
+                process.env._ = savedEnvUnderscore;
+            }
+        });
+
+        it("should register completion for 'x' when process.env._ is unset (globally installed)", async () => {
+            // Arrange
+            delete process.env._;
+
+            // Act
+            try {
+                await main(["node", "x.mjs", "--completion"]);
+            } catch {
+                // process.exit is mocked to throw in tests
+            }
+
+            // Assert
+            const output = vi.mocked(console.log).mock.calls.flat().join("\n");
+            expect(output).toMatch(/_x_yargs_completions x$/m);
+        });
+
+        it("should register completion for 'x' when invoked via another tool (process.env._ is not x.mjs)", async () => {
+            // Arrange
+            process.env._ = "/usr/local/bin/pnpm";
+
+            // Act
+            try {
+                await main(["node", "x.mjs", "--completion"]);
+            } catch {
+                // process.exit is mocked to throw in tests
+            }
+
+            // Assert
+            const output = vi.mocked(console.log).mock.calls.flat().join("\n");
+            expect(output).toMatch(/_x_yargs_completions x$/m);
+        });
+
+        it("should not register completion for 'x' when invoked directly as x.mjs (dev mode)", async () => {
+            // Arrange
+            process.env._ = "./dist/x.mjs";
+
+            // Act
+            try {
+                await main(["node", "x.mjs", "--completion"]);
+            } catch {
+                // process.exit is mocked to throw in tests
+            }
+
+            // Assert
+            const output = vi.mocked(console.log).mock.calls.flat().join("\n");
+            expect(output).not.toMatch(/_x_yargs_completions x$/m);
+        });
+    });
 });

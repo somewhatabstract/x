@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {realpathSync} from "node:fs";
 import {fileURLToPath} from "node:url";
 import yargs from "yargs";
 import {hideBin} from "yargs/helpers";
@@ -134,7 +135,7 @@ export async function main(rawArgv: string[]): Promise<XResult> {
 
 // Only run main if we aren't being imported as a module.
 /* v8 ignore start -- runtime-only CLI bootstrap */
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
     main(process.argv)
         .then((result) => {
             process.exit(result.exitCode);

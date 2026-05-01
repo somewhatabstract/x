@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import {realpathSync} from "node:fs";
+import {basename} from "node:path";
 import {fileURLToPath} from "node:url";
 import yargs from "yargs";
 import {hideBin} from "yargs/helpers";
@@ -94,7 +95,14 @@ export async function main(rawArgv: string[]): Promise<XResult> {
         // detect if they forgot to do that and warn them.
         .parserConfiguration({"unknown-options-as-args": true});
 
-    const argv = await yi.parse();
+    // If we have a process.env._ and it doesn't end with `x.mjs`, then it's
+    // likely we were invoked by another tool like pnpm or node.
+    // We want the scriptname to reflect, as best we can, what the user
+    // invoked.
+    const argv =
+        process.env._ && basename(process.env._) === "x.mjs"
+            ? await yi.parse()
+            : await yi.scriptName("x").parse();
 
     if (argv.help || argv.h) {
         outputHelpWithSplash(yi);

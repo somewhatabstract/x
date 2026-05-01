@@ -12,7 +12,7 @@
         "dist"
     ],
     "type": "module",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "description": "Execute any bin defined by any package in a monorepo without needing to install that package",
     "scripts": {
         "build": "tsdown",

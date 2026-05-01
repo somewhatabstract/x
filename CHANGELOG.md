@@ -1,5 +1,11 @@
 # @somewhatabstract/x
 
+## 0.3.1
+
+### Patch Changes
+
+- 135e973: Make sure --completion output uses absolute path
+
 ## 0.3.0
 
 ### Minor Changes

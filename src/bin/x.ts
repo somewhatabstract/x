@@ -93,12 +93,7 @@ export async function main(rawArgv: string[]): Promise<XResult> {
         // detect if they forgot to do that and warn them.
         .parserConfiguration({"unknown-options-as-args": true});
 
-    // Set the script name dynamically
-    // Use absolute path for completion generation, simple name for help/usage
-    const isCompletionRequest = process.argv.includes("--completion");
-    const argv = await (isCompletionRequest
-        ? yi.scriptName(fileURLToPath(import.meta.url)).parse()
-        : yi.parse());
+    const argv = await yi.parse();
 
     if (argv.help || argv.h) {
         outputHelpWithSplash(yi);

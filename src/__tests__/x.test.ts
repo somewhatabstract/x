@@ -485,7 +485,9 @@ describe("bin/x", () => {
                 .mocked(console.log)
                 .mock.calls.flat()
                 .join("\n");
-            expect(logOutput).not.toMatch(/\/.*bin\/x.*--get-yargs-completions/);
+            expect(logOutput).not.toMatch(
+                /\/.*bin\/x.*--get-yargs-completions/,
+            );
         });
     });
 });

@@ -94,25 +94,31 @@ for (const file of files) {
     // Collect already-pinned refs
     // Groups: action(1), sha(2), quote(3), ref(4)
     PINNED_RE.lastIndex = 0;
-    while ((m = PINNED_RE.exec(content)) !== null) {
+    m = PINNED_RE.exec(content);
+    while (m !== null) {
         const [, action, , , ref] = m;
         seen.set(`${action}@${ref}`, null);
         allRepos.add(action.split("/").slice(0, 2).join("/"));
+        m = PINNED_RE.exec(content);
     }
 
     // Collect pinned-without-tag refs (for listing only)
     PINNED_NO_TAG_RE.lastIndex = 0;
-    while ((m = PINNED_NO_TAG_RE.exec(content)) !== null) {
+    m = PINNED_NO_TAG_RE.exec(content);
+    while (m !== null) {
         const [, action] = m;
         allRepos.add(action.split("/").slice(0, 2).join("/"));
+        m = PINNED_NO_TAG_RE.exec(content);
     }
 
     // Collect unpinned refs (tag/branch directly after @)
     UNPINNED_RE.lastIndex = 0;
-    while ((m = UNPINNED_RE.exec(content)) !== null) {
+    m = UNPINNED_RE.exec(content);
+    while (m !== null) {
         const [, action, , ref] = m;
         seen.set(`${action}@${ref}`, null);
         allRepos.add(action.split("/").slice(0, 2).join("/"));
+        m = UNPINNED_RE.exec(content);
     }
 }
 

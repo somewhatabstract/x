@@ -445,4 +445,49 @@ describe("bin/x", () => {
         // Assert
         expect(xImplMock).not.toHaveBeenCalled();
     });
+
+    describe("--completion script generation", () => {
+        let savedArgv: string[];
+
+        beforeEach(() => {
+            savedArgv = process.argv;
+            vi.spyOn(console, "log").mockImplementation(() => {});
+        });
+
+        afterEach(() => {
+            process.argv = savedArgv;
+        });
+
+        it("should embed the absolute module path in the completion script so it works from any directory", async () => {
+            // Arrange
+            process.argv = ["node", "x.mjs", "--completion"];
+
+            // Act
+            await main(["node", "x.mjs", "--completion"]).catch(() => {});
+
+            // Assert
+            const logOutput = vi
+                .mocked(console.log)
+                .mock.calls.flat()
+                .join("\n");
+            expect(logOutput).toMatch(/\/.*bin\/x.*--get-yargs-completions/);
+        });
+
+        it("should not use the absolute module path as the script name when not invoked as a completion request", async () => {
+            // Arrange
+            process.argv = ["node", "x.mjs"];
+
+            // Act
+            await main(["node", "x.mjs"]).catch(() => {});
+
+            // Assert
+            const logOutput = vi
+                .mocked(console.log)
+                .mock.calls.flat()
+                .join("\n");
+            expect(logOutput).not.toMatch(
+                /\/.*bin\/x.*--get-yargs-completions/,
+            );
+        });
+    });
 });

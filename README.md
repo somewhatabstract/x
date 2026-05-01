@@ -55,7 +55,7 @@ yarn x <script-name> [-- <args...>]
 
 ## Usage
 
-These examples omit the package manager execution prefix for brevity — in practice you'd run e.g. `pnpm x <script-name>`.
+These examples assume global installation for brevity, but the same commands can be run with a local installation by prefixing with your package manager's exec command as shown above.
 
 ```bash
 # Execute a bin script from any package in the workspace
@@ -68,7 +68,7 @@ x --dry-run <script-name>
 x my-script -- --flag value
 ```
 
-This only executes bin scripts defined by packages in your workspace, not their dependencies. The bin must be an executable file with a shebang (on Unix-like systems) or a directly runnable file (on Windows), or a JS script that can be executed with Node.js.
+This only executes bin scripts defined by packages in your workspace, not bin scripts defined by their dependencies. The bin must be an executable file with a shebang (on Unix-like systems) or a directly runnable file (on Windows), or a JS script that can be executed with Node.js.
 
 ## Features
 
@@ -79,9 +79,9 @@ This only executes bin scripts defined by packages in your workspace, not their 
 
 ### Auto-completion
 
-`@somewhatabstract/x` can generate a shell completion script so you can tab-complete available bin scripts. It is recommended to use a global installation of `x` for tab completion support since it will register the specific path to the `x` binary invoked to add the support (which could be the one installed in a specific project when not using a global installation).
+`@somewhatabstract/x` can generate a shell completion script so you can tab-complete available bin scripts.
 
-With `@somewhatabstract/x` installed globally, add this to your shell configuration file (e.g. `~/.bashrc`, `~/.zshrc`, etc.):
+For example, with `@somewhatabstract/x` installed globally, use this to add tab completion to your current shell session:
 
 ```bash
 source <(x --completion)

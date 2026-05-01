@@ -475,10 +475,10 @@ describe("bin/x", () => {
 
         it("should not use the absolute module path as the script name when not invoked as a completion request", async () => {
             // Arrange
-            // process.argv does not include --completion
+            process.argv = ["node", "x.mjs"];
 
             // Act
-            await main(["node", "x.mjs", "--completion"]).catch(() => {});
+            await main(["node", "x.mjs"]).catch(() => {});
 
             // Assert
             const logOutput = vi

@@ -29,7 +29,7 @@ pnpm add -g @somewhatabstract/x
 yarn global add @somewhatabstract/x
 ```
 
-When run from the global installation, `x` is invoked as just `x`. It will mimic the environment for the target script that it would run under if it had been unvoked via `npm exec` or equivalent.
+When run from the global installation, `x` is invoked as just `x`. It will mimic the environment for the target script that it would run under if it had been invoked via `npm exec` or equivalent.
 
 ### Local installation
 
@@ -72,12 +72,12 @@ This only executes bin scripts defined by packages in your workspace, not their 
 
 - 🔍 **Automatic Discovery**: Finds all packages in your monorepo workspace via @manypkg
 - 👁️ **Dry-Run Mode**: Preview what would be executed with `--dry-run`
-- 📦 **Multi-Package-Manager**: Works with npm, Yarn, pnpm, Lerna, Bun, and Rush, mimicing the npm-like environment.
+- 📦 **Multi-Package-Manager**: Works with npm, Yarn, pnpm, Lerna, Bun, and Rush, mimicking the npm-like environment.
 - ⌨️ **Auto-completion**: Shell autocompletion for available bin scripts
 
 ### Auto-completion
 
-`@somewhatabstract/x` can generate a shell completion script so you can tab-complete available bin scripts. It's best to use a global installation of `x` tab completion support since it will register the specific path to the `x` binary, which is necessary for the completion script to work correctly.
+`@somewhatabstract/x` can generate a shell completion script so you can tab-complete available bin scripts. It is recommended to use a global installation of `x` for tab completion support since it will register the specific path to the `x` binary invoked to add the support (which could be the one installed in a specific project when not using a global installation).
 
 With `@somewhatabstract/x` installed globally, add this to your shell configuration file (e.g. `~/.bashrc`, `~/.zshrc`, etc.):
 

@@ -1,3 +1,5 @@
+[![Node CI](https://github.com/somewhatabstract/x/workflows/Node%20CI/badge.svg)](https://github.com/somewhatabstract/x/actions) [![codecov](https://codecov.io/gh/somewhatabstract/x/branch/main/graph/badge.svg)](https://codecov.io/gh/somewhatabstract/x) [![npm (tag)](https://img.shields.io/npm/v/@somewhatabstract/x/latest)](https://www.npmjs.com/package/@somewhatabstract/x) [![Node Version Required](https://img.shields.io/node/v/@somewhatabstract/x/latest)](https://img.shields.io/node/v/@somewhatabstractx/latest)
+
 ![Project wordmark](./assets/wordmark.png)
 
 Execute bin scripts from monorepo packages without installing them at the root.

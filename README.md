@@ -70,7 +70,7 @@ x my-script -- --flag value
 
 This only executes bin scripts defined by packages in your workspace, not bin scripts defined by their dependencies. The bin must be an executable file with a shebang (on Unix-like systems) or a directly runnable file (on Windows), or a JS script that can be executed with Node.js.
 
-> ![NOTE]
+> [!NOTE]
 > `x` must be installed (globally or locally) to be used. It cannot be used via `npx`, `pnpx`, etc. due to how those tools pass arguments which interferes with how `x` processes arguments. If you want to use `x` without installing it globally, install it as a dev dependency in your monorepo root package and run it via your package manager's exec command as shown above.
 
 ## Features

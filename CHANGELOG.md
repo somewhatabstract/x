@@ -1,5 +1,11 @@
 # @somewhatabstract/x
 
+## 0.4.1
+
+### Patch Changes
+
+- a60a5c9: Make sure that we resolve to realpaths when comparing file paths in module import
+
 ## 0.4.0
 
 ### Minor Changes

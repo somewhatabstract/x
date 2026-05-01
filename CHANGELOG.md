@@ -1,5 +1,11 @@
 # @somewhatabstract/x
 
+## 0.5.0
+
+### Minor Changes
+
+- 7f03a1f: Give a useful script name for installs. This uses `x` when invoked as `x` or via say `pnpm x`. This means the tab completion should work out-of-the-box for global installations.
+
 ## 0.4.1
 
 ### Patch Changes

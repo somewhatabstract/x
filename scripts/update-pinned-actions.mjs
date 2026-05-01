@@ -4,7 +4,7 @@
  *   1. Already pinned (`uses: owner/repo@<sha> # <tag>`) — updates stale SHAs
  *   2. Unpinned (`uses: owner/repo@<tag>`) — replaces with `@<sha> # <tag>`
  *
- * Usage: node utils/update-pinned-actions.js
+ * Usage: node scripts/update-pinned-actions.mjs
  */
 import {execSync} from "node:child_process";
 import fs from "node:fs";

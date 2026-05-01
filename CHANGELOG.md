@@ -1,5 +1,20 @@
 # @somewhatabstract/x
 
+## 0.3.0
+
+### Minor Changes
+
+- 1901502: Add `--list` (`-l`) flag to discover available workspace bin scripts.
+
+  - `x --list` prints all available bin script names
+  - `x --list=full` groups scripts by the package that provides them
+  - `x --list --json` outputs the listing as JSON for scripting use
+
+### Patch Changes
+
+- f8d2f20: Add splash and logo
+- 9571f66: Add support for autocompletion
+
 ## 0.2.0
 
 ### Minor Changes

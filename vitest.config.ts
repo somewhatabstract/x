@@ -4,7 +4,7 @@ export default defineConfig({
     test: {
         coverage: {
             include: ["src/**/*.ts"],
-            exclude: ["scripts/pack-readme.mjs"],
+            exclude: ["scripts"],
             reporter: ["text", "json"],
         },
     },

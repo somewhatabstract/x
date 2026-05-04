@@ -1,5 +1,11 @@
 # @somewhatabstract/x
 
+## 0.5.1
+
+### Patch Changes
+
+- 939d3c1: Minify the tsdown output
+
 ## 0.5.0
 
 ### Minor Changes

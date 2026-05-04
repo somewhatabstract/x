@@ -9,6 +9,7 @@ export default defineConfig({
         oxc: true,
         tsconfig: "tsconfig-types.json",
     },
+    minify: true,
     plugins: [
         process.env.CODECOV_TOKEN
             ? // This plugin provides bundle analysis from codecov, but does

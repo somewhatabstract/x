@@ -2,7 +2,7 @@
 import {realpathSync} from "node:fs";
 import {basename} from "node:path";
 import {fileURLToPath} from "node:url";
-import yargs from "yargs";
+import yargs, {type Argv} from "yargs";
 import {hideBin} from "yargs/helpers";
 import {HandledError} from "../errors";
 import {getCompletions} from "../get-completions";
@@ -10,6 +10,28 @@ import {listImpl} from "../list-impl";
 import {outputHelpWithSplash} from "../output-help-with-splash";
 import {validateArgv} from "../validate-argv";
 import {type XResult, xImpl} from "../x-impl";
+
+const POSITIONAL_NAMES = new Set(["script-name", "scriptName"]);
+
+/**
+ * Collect the flag forms (e.g. "--list", "-l") of all of x's own options from
+ * a configured yargs instance after parsing. Keeps the warning logic in sync
+ * with the yargs config without a hand-maintained list.
+ */
+function collectXFlags(yi: Argv): Set<string> {
+    const flags = new Set<string>();
+    const parsed = yi.parsed;
+    if (parsed && typeof parsed === "object") {
+        for (const name of Object.keys(parsed.aliases)) {
+            if (POSITIONAL_NAMES.has(name)) continue;
+            flags.add(name.length === 1 ? `-${name}` : `--${name}`);
+        }
+    }
+    // --completion is registered as a yargs completion command, not an
+    // option, so it doesn't appear in parsed.aliases.
+    flags.add("--completion");
+    return flags;
+}
 
 export async function main(rawArgv: string[]): Promise<XResult> {
     const rawArgs = hideBin(rawArgv);
@@ -104,41 +126,76 @@ export async function main(rawArgv: string[]): Promise<XResult> {
             ? await yi.parse()
             : await yi.scriptName("x").parse();
 
-    if (argv.help || argv.h) {
-        outputHelpWithSplash(yi);
-        return {exitCode: 0};
-    }
+    // Decide up-front whether to print the misplaced-flag tip, but defer the
+    // actual output until the command finishes so it lands at the bottom of
+    // the terminal where the user is already looking. The detection has to
+    // happen now (before --help/--list early-exits) so we capture the user's
+    // intent against the raw args; the printing happens in a finally below.
+    const scriptName = (argv["script-name"] as string | undefined)?.trim();
+    const printFlagTip = makeFlagTipPrinter(scriptName, rawArgs, yi);
 
-    // Check if we are in list mode
-    const listArg = argv.list;
-    if (listArg !== undefined) {
-        const mode = listArg === "full" ? "full" : "names-only";
-        const json = !!argv.json;
-        return await listImpl({mode, json});
-    }
-
-    const args = (argv._ as string[]) || [];
-    const options = {
-        dryRun: argv["dry-run"] as boolean,
-    };
-
-    // If any args look like flags and -- was not used, warn the user and suggest
-    // using -- to explicitly separate flag arguments from x's own options.
-    const scriptName = (argv["script-name"] as string).trim();
-    if (!rawArgs.includes("--")) {
-        const flagLikeArgs = args.filter(
-            (arg) => typeof arg === "string" && arg.startsWith("-"),
-        );
-        if (flagLikeArgs.length > 0) {
-            console.warn(
-                `Tip: To pass flags to "${scriptName}", use '--' to separate them:`,
-            );
-            console.warn(`  x ${scriptName} -- ${args.join(" ")}`);
+    try {
+        if (argv.help || argv.h) {
+            outputHelpWithSplash(yi);
+            return {exitCode: 0};
         }
-    }
 
-    // Run the implementation and exit with the appropriate code
-    return xImpl(scriptName, args, options);
+        // Check if we are in list mode
+        const listArg = argv.list;
+        if (listArg !== undefined) {
+            const mode = listArg === "full" ? "full" : "names-only";
+            const json = !!argv.json;
+            return await listImpl({mode, json});
+        }
+
+        const args = (argv._ as string[]) || [];
+        const options = {
+            dryRun: argv["dry-run"] as boolean,
+        };
+
+        // scriptName is guaranteed non-empty here by validateArgv (since
+        // --list/--help would have early-exited above if it was missing).
+        return await xImpl(scriptName as string, args, options);
+    } finally {
+        printFlagTip();
+    }
+}
+
+/**
+ * Detect if the user passed an x flag after the script name without `--`,
+ * and return a function that prints the tip when called. Returns a no-op
+ * when there's nothing to warn about (or when NO_WARN is set). Doing the
+ * detection eagerly and the printing lazily lets us land the tip at the
+ * bottom of the output where it's most visible.
+ */
+function makeFlagTipPrinter(
+    scriptName: string | undefined,
+    rawArgs: string[],
+    yi: Argv,
+): () => void {
+    const noop = () => {};
+    if (!scriptName || process.env.NO_WARN || rawArgs.includes("--")) {
+        return noop;
+    }
+    const scriptIdx = rawArgs.indexOf(scriptName);
+    if (scriptIdx < 0) return noop;
+
+    const beforeScript = rawArgs.slice(0, scriptIdx);
+    const afterScript = rawArgs.slice(scriptIdx + 1);
+    const xFlags = collectXFlags(yi);
+    const hasXFlagAfterScript = afterScript.some(
+        (arg) => xFlags.has(arg) || xFlags.has(arg.split("=")[0]),
+    );
+    if (!hasXFlagAfterScript) return noop;
+
+    const prefix = [...beforeScript, scriptName].join(" ");
+    return () => {
+        console.warn(
+            `Tip: To pass flags to "${scriptName}", use '--' to separate them:`,
+        );
+        console.warn(`  x ${prefix} -- ${afterScript.join(" ")}`);
+        console.warn(`(Set NO_WARN=1 to silence this tip.)`);
+    };
 }
 
 // Only run main if we aren't being imported as a module.

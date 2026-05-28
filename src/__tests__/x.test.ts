@@ -289,6 +289,22 @@ describe("bin/x", () => {
         );
     });
 
+    it("should print the tip after the command's output, so it lands at the bottom of the terminal", async () => {
+        // Arrange
+        listImplMock.mockResolvedValue({exitCode: 0});
+
+        // Act
+        await main(["node", "x.mjs", "my-script", "--list"]);
+
+        // Assert
+        const listCallOrder = listImplMock.mock.invocationCallOrder[0];
+        const warnCallOrders = vi.mocked(console.warn).mock.invocationCallOrder;
+        const firstWarnAfterList = warnCallOrders.find(
+            (order) => order > listCallOrder,
+        );
+        expect(firstWarnAfterList).toBeDefined();
+    });
+
     it("should pass positional args to xImpl when user omits --", async () => {
         // Arrange
         xImplMock.mockResolvedValue({exitCode: 0});

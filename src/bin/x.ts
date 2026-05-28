@@ -126,56 +126,76 @@ export async function main(rawArgv: string[]): Promise<XResult> {
             ? await yi.parse()
             : await yi.scriptName("x").parse();
 
-    // If one of x's own option flags appears after the script name without
-    // using `--`, it was consumed by x rather than forwarded to the script.
-    // Tip the user off so they can disambiguate. This must happen BEFORE the
-    // early-exit branches for --help/--list/etc. — those branches are exactly
-    // the cases where x is about to do something other than what the user
-    // probably intended. Flags before the script name are unambiguously for x.
-    // Suppressed when NO_WARN is set.
+    // Decide up-front whether to print the misplaced-flag tip, but defer the
+    // actual output until the command finishes so it lands at the bottom of
+    // the terminal where the user is already looking. The detection has to
+    // happen now (before --help/--list early-exits) so we capture the user's
+    // intent against the raw args; the printing happens in a finally below.
     const scriptName = (argv["script-name"] as string | undefined)?.trim();
-    if (scriptName && !process.env.NO_WARN && !rawArgs.includes("--")) {
-        const scriptIdx = rawArgs.indexOf(scriptName);
-        if (scriptIdx >= 0) {
-            const beforeScript = rawArgs.slice(0, scriptIdx);
-            const afterScript = rawArgs.slice(scriptIdx + 1);
-            const xFlags = collectXFlags(yi);
-            const hasXFlagAfterScript = afterScript.some(
-                (arg) => xFlags.has(arg) || xFlags.has(arg.split("=")[0]),
-            );
-            if (hasXFlagAfterScript) {
-                const prefix = [...beforeScript, scriptName].join(" ");
-                console.warn(
-                    `Tip: To pass flags to "${scriptName}", use '--' to separate them:`,
-                );
-                console.warn(`  x ${prefix} -- ${afterScript.join(" ")}`);
-                console.warn(`(Set NO_WARN=1 to silence this tip.)`);
-            }
+    const printFlagTip = makeFlagTipPrinter(scriptName, rawArgs, yi);
+
+    try {
+        if (argv.help || argv.h) {
+            outputHelpWithSplash(yi);
+            return {exitCode: 0};
         }
-    }
 
-    if (argv.help || argv.h) {
-        outputHelpWithSplash(yi);
-        return {exitCode: 0};
-    }
+        // Check if we are in list mode
+        const listArg = argv.list;
+        if (listArg !== undefined) {
+            const mode = listArg === "full" ? "full" : "names-only";
+            const json = !!argv.json;
+            return await listImpl({mode, json});
+        }
 
-    // Check if we are in list mode
-    const listArg = argv.list;
-    if (listArg !== undefined) {
-        const mode = listArg === "full" ? "full" : "names-only";
-        const json = !!argv.json;
-        return await listImpl({mode, json});
-    }
+        const args = (argv._ as string[]) || [];
+        const options = {
+            dryRun: argv["dry-run"] as boolean,
+        };
 
-    const args = (argv._ as string[]) || [];
-    const options = {
-        dryRun: argv["dry-run"] as boolean,
+        // scriptName is guaranteed non-empty here by validateArgv (since
+        // --list/--help would have early-exited above if it was missing).
+        return await xImpl(scriptName as string, args, options);
+    } finally {
+        printFlagTip();
+    }
+}
+
+/**
+ * Detect if the user passed an x flag after the script name without `--`,
+ * and return a function that prints the tip when called. Returns a no-op
+ * when there's nothing to warn about (or when NO_WARN is set). Doing the
+ * detection eagerly and the printing lazily lets us land the tip at the
+ * bottom of the output where it's most visible.
+ */
+function makeFlagTipPrinter(
+    scriptName: string | undefined,
+    rawArgs: string[],
+    yi: Argv,
+): () => void {
+    const noop = () => {};
+    if (!scriptName || process.env.NO_WARN || rawArgs.includes("--")) {
+        return noop;
+    }
+    const scriptIdx = rawArgs.indexOf(scriptName);
+    if (scriptIdx < 0) return noop;
+
+    const beforeScript = rawArgs.slice(0, scriptIdx);
+    const afterScript = rawArgs.slice(scriptIdx + 1);
+    const xFlags = collectXFlags(yi);
+    const hasXFlagAfterScript = afterScript.some(
+        (arg) => xFlags.has(arg) || xFlags.has(arg.split("=")[0]),
+    );
+    if (!hasXFlagAfterScript) return noop;
+
+    const prefix = [...beforeScript, scriptName].join(" ");
+    return () => {
+        console.warn(
+            `Tip: To pass flags to "${scriptName}", use '--' to separate them:`,
+        );
+        console.warn(`  x ${prefix} -- ${afterScript.join(" ")}`);
+        console.warn(`(Set NO_WARN=1 to silence this tip.)`);
     };
-
-    // Run the implementation and exit with the appropriate code. scriptName
-    // is guaranteed non-empty here by validateArgv (since --list/--help
-    // would have early-exited above if it was missing).
-    return xImpl(scriptName as string, args, options);
 }
 
 // Only run main if we aren't being imported as a module.

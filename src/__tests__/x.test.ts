@@ -264,6 +264,31 @@ describe("bin/x", () => {
         expect(console.warn).not.toHaveBeenCalled();
     });
 
+    it("should show a tip when --list follows the script name, even though x exits into list mode", async () => {
+        // Arrange
+        listImplMock.mockResolvedValue({exitCode: 0});
+
+        // Act
+        await main(["node", "x.mjs", "my-script", "--list"]);
+
+        // Assert
+        expect(console.warn).toHaveBeenCalledWith(
+            `Tip: To pass flags to "my-script", use '--' to separate them:`,
+        );
+    });
+
+    it("should show a tip when --help follows the script name, even though x exits into help mode", async () => {
+        // Arrange
+
+        // Act
+        await main(["node", "x.mjs", "my-script", "--help"]);
+
+        // Assert
+        expect(console.warn).toHaveBeenCalledWith(
+            `Tip: To pass flags to "my-script", use '--' to separate them:`,
+        );
+    });
+
     it("should pass positional args to xImpl when user omits --", async () => {
         // Arrange
         xImplMock.mockResolvedValue({exitCode: 0});

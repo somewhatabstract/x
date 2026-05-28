@@ -2,7 +2,7 @@
 import {realpathSync} from "node:fs";
 import {basename} from "node:path";
 import {fileURLToPath} from "node:url";
-import yargs from "yargs";
+import yargs, {type Argv} from "yargs";
 import {hideBin} from "yargs/helpers";
 import {HandledError} from "../errors";
 import {getCompletions} from "../get-completions";
@@ -10,6 +10,28 @@ import {listImpl} from "../list-impl";
 import {outputHelpWithSplash} from "../output-help-with-splash";
 import {validateArgv} from "../validate-argv";
 import {type XResult, xImpl} from "../x-impl";
+
+const POSITIONAL_NAMES = new Set(["script-name", "scriptName"]);
+
+/**
+ * Collect the flag forms (e.g. "--list", "-l") of all of x's own options from
+ * a configured yargs instance after parsing. Keeps the warning logic in sync
+ * with the yargs config without a hand-maintained list.
+ */
+function collectXFlags(yi: Argv): Set<string> {
+    const flags = new Set<string>();
+    const parsed = yi.parsed;
+    if (parsed && typeof parsed === "object") {
+        for (const name of Object.keys(parsed.aliases)) {
+            if (POSITIONAL_NAMES.has(name)) continue;
+            flags.add(name.length === 1 ? `-${name}` : `--${name}`);
+        }
+    }
+    // --completion is registered as a yargs completion command, not an
+    // option, so it doesn't appear in parsed.aliases.
+    flags.add("--completion");
+    return flags;
+}
 
 export async function main(rawArgv: string[]): Promise<XResult> {
     const rawArgs = hideBin(rawArgv);
@@ -122,18 +144,27 @@ export async function main(rawArgv: string[]): Promise<XResult> {
         dryRun: argv["dry-run"] as boolean,
     };
 
-    // If any args look like flags and -- was not used, warn the user and suggest
-    // using -- to explicitly separate flag arguments from x's own options.
+    // If one of x's own option flags appears after the script name without
+    // using `--`, it was consumed by x rather than forwarded to the script.
+    // Tip the user off so they can disambiguate. Flags before the script name
+    // are unambiguously for x, so we don't warn about those. Suppressed when
+    // NO_WARN is set.
     const scriptName = (argv["script-name"] as string).trim();
-    if (!rawArgs.includes("--")) {
-        const flagLikeArgs = args.filter(
-            (arg) => typeof arg === "string" && arg.startsWith("-"),
+    if (!process.env.NO_WARN && !rawArgs.includes("--")) {
+        const scriptIdx = rawArgs.indexOf(scriptName);
+        const beforeScript = rawArgs.slice(0, scriptIdx);
+        const afterScript = rawArgs.slice(scriptIdx + 1);
+        const xFlags = collectXFlags(yi);
+        const hasXFlagAfterScript = afterScript.some(
+            (arg) => xFlags.has(arg) || xFlags.has(arg.split("=")[0]),
         );
-        if (flagLikeArgs.length > 0) {
+        if (hasXFlagAfterScript) {
+            const prefix = [...beforeScript, scriptName].join(" ");
             console.warn(
                 `Tip: To pass flags to "${scriptName}", use '--' to separate them:`,
             );
-            console.warn(`  x ${scriptName} -- ${args.join(" ")}`);
+            console.warn(`  x ${prefix} -- ${afterScript.join(" ")}`);
+            console.warn(`(Set NO_WARN=1 to silence this tip.)`);
         }
     }
 

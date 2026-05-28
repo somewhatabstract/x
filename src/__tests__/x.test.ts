@@ -34,6 +34,7 @@ describe("bin/x", () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        vi.unstubAllEnvs();
     });
 
     it("should call xImpl with the script name from argv", async () => {
@@ -162,12 +163,12 @@ describe("bin/x", () => {
         );
     });
 
-    it("should show a tip when args contain flags and -- was not used", async () => {
+    it("should show a tip when an x flag appears after the script name without --", async () => {
         // Arrange
         xImplMock.mockResolvedValue({exitCode: 0});
 
         // Act
-        await main(["node", "x.mjs", "my-script", "--unknown-flag", "value"]);
+        await main(["node", "x.mjs", "my-script", "--dry-run"]);
 
         // Assert
         expect(console.warn).toHaveBeenCalledWith(
@@ -175,16 +176,29 @@ describe("bin/x", () => {
         );
     });
 
-    it("should show the corrected command in the tip when args contain flags without --", async () => {
+    it("should show the corrected command in the tip when an x flag follows the script name", async () => {
         // Arrange
         xImplMock.mockResolvedValue({exitCode: 0});
 
         // Act
-        await main(["node", "x.mjs", "my-script", "--unknown-flag", "value"]);
+        await main(["node", "x.mjs", "my-script", "--dry-run", "value"]);
 
         // Assert
         expect(console.warn).toHaveBeenCalledWith(
-            "  x my-script -- --unknown-flag value",
+            "  x my-script -- --dry-run value",
+        );
+    });
+
+    it("should advertise NO_WARN in the tip so users know how to silence it", async () => {
+        // Arrange
+        xImplMock.mockResolvedValue({exitCode: 0});
+
+        // Act
+        await main(["node", "x.mjs", "my-script", "--dry-run"]);
+
+        // Assert
+        expect(console.warn).toHaveBeenCalledWith(
+            "(Set NO_WARN=1 to silence this tip.)",
         );
     });
 
@@ -193,14 +207,7 @@ describe("bin/x", () => {
         xImplMock.mockResolvedValue({exitCode: 0});
 
         // Act
-        await main([
-            "node",
-            "x.mjs",
-            "my-script",
-            "--",
-            "--unknown-flag",
-            "value",
-        ]);
+        await main(["node", "x.mjs", "my-script", "--", "--dry-run", "value"]);
 
         // Assert
         expect(console.warn).not.toHaveBeenCalled();
@@ -218,6 +225,40 @@ describe("bin/x", () => {
             "positional-arg",
             "another-arg",
         ]);
+
+        // Assert
+        expect(console.warn).not.toHaveBeenCalled();
+    });
+
+    it("should not show a tip when args contain non-x flags (script's own flags pass through cleanly)", async () => {
+        // Arrange
+        xImplMock.mockResolvedValue({exitCode: 0});
+
+        // Act
+        await main(["node", "x.mjs", "my-script", "--unknown-flag", "value"]);
+
+        // Assert
+        expect(console.warn).not.toHaveBeenCalled();
+    });
+
+    it("should not show a tip when an x flag appears before the script name (unambiguously for x)", async () => {
+        // Arrange
+        xImplMock.mockResolvedValue({exitCode: 0});
+
+        // Act
+        await main(["node", "x.mjs", "--dry-run", "my-script"]);
+
+        // Assert
+        expect(console.warn).not.toHaveBeenCalled();
+    });
+
+    it("should not show a tip when NO_WARN is set, even if an x flag follows the script name", async () => {
+        // Arrange
+        xImplMock.mockResolvedValue({exitCode: 0});
+        vi.stubEnv("NO_WARN", "1");
+
+        // Act
+        await main(["node", "x.mjs", "my-script", "--dry-run"]);
 
         // Assert
         expect(console.warn).not.toHaveBeenCalled();
@@ -310,11 +351,11 @@ describe("bin/x", () => {
         xImplMock.mockResolvedValue({exitCode: 0});
 
         // Act
-        await main(["node", "x.mjs", "e2e", "setup", "--flag", "value"]);
+        await main(["node", "x.mjs", "e2e", "setup", "--dry-run", "value"]);
 
         // Assert
         expect(console.warn).toHaveBeenCalledWith(
-            "  x e2e -- setup --flag value",
+            "  x e2e -- setup --dry-run value",
         );
     });
 
